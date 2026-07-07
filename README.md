@@ -1,10 +1,13 @@
-# 🚀 S01-BR-G9-TEAM-08
-
+# 🚀 FinanceAI
+![Java](https://img.shields.io/badge/Java-21-orange?logo=openjdk)
+![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.x-6DB33F?logo=springboot)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql)
+![Status](https://img.shields.io/badge/Status-Em%20Desenvolvimento-blue)
 ---
 
 ## 📝 Sobre
 
-O **FinanceAI** é uma aplicação desenvolvida para **Auxiliar o controle Financeiro Pessoal**. A solução foi criada para **Ajudar pessoas com dificuldades em controlar sua vida financeira**, oferecendo uma plataforma simples, eficiente e escalável.
+O FinanceAI é uma plataforma de gestão financeira pessoal que utiliza inteligência artificial para auxiliar usuários a registrar receitas e despesas, acompanhar indicadores financeiros e receber sugestões para melhorar sua saúde financeira.
 
 ---
 
@@ -12,10 +15,22 @@ O **FinanceAI** é uma aplicação desenvolvida para **Auxiliar o controle Finan
 
 Este MVP busca:
 
-- ✅ Objetivo 1
-- ✅ Objetivo 2
-- ✅ Objetivo 3
-- ✅ Objetivo 4
+- ✅ Registrar receitas e despesas.
+- ✅ Organizar gastos por categorias.
+- ✅ Exibir dashboards financeiros.
+- ✅ Utilizar IA para gerar recomendações de economia.
+- ✅ Apresentar indicadores da saúde financeira do usuário.
+
+---
+
+## 📌 Funcionalidades
+
+- 👤 Cadastro de usuários
+- 💸 Registro de despesas
+- 💰 Registro de receitas
+- 📈 Dashboard financeiro
+- 🤖 Recomendações com IA
+- 📊 Relatórios financeiros
 
 ---
 
@@ -36,17 +51,17 @@ A solução foi desenvolvida integrando conceitos de **Engenharia de Software** 
 
 ### Pré-requisitos
 
-- Java XX
-- PostgreSQL
-- Maven
+- Java 21
+- Maven 3.9+
+- PostgreSQL 16+
 - Git
 
 ### Instalação
 
 ```bash
-git clone https://github.com/No-Country-simulation/S01-BR-G9-TEAM-08
+git clone https://github.com/No-Country-simulation/S01-BR-G9-TEAM-08.git
 
-cd nome-do-projeto
+cd S01-BR-G9-TEAM-08
 
 mvn spring-boot:run
 ```
@@ -78,13 +93,13 @@ mvn spring-boot:run
 
 ### Backend
 
-- ☕ Java
+- ☕ Java 21
 - 🌱 Spring Boot
 
 ### Frontend
 
-- 🌐 HTML
-- 🎨 CSS
+- 🌐 HTML 5
+- 🎨 CSS 3
 - ⚡ JavaScript
 
 ### Banco de Dados
@@ -93,11 +108,12 @@ mvn spring-boot:run
 
 ### Ferramentas
 
-- 💻 Visual Studio Code
+- 💻 VS Code
 - 📬 Postman
-- 🎥 Google Meet
-- 🤖 ChatGPT/Claude
 - 📋 Trello
+- 🤖 ChatGPT
+- 🧠 Claude
+- 🐙 GitHub
 ---
 
 ## 📂 Estrutura do Projeto
@@ -116,10 +132,28 @@ mvn spring-boot:run
 
 ## 🔗 Links
 
-- 📁 **GitHub:** https://github.com/No-Country-simulation/S01-BR-G9-TEAM-08
-- 🎥 **Vídeo Demonstrativo:** (Link do youtube)
+📁 [**Repositório**](https://github.com/No-Country-simulation/S01-BR-G9-TEAM-08)
+
+🎥 [**Demonstração**](LINKYOUTUBE)
+
+📋 [**Trello**](https://trello.com/b/RxKuz0ec/g9-equipe-08-brasil)
+
+📄 [Documentação](https://docs.google.com/document/d/1y_H0BXH-ShkH-L08tipggLHcjtMfQp9gaxV049ceevA/edit?tab=t.0)
 
 ---
+
+## 📅 Roadmap
+
+- [x] Planejamento
+- [x] Definição da arquitetura
+- [ ] Backend
+- [ ] Frontend
+- [ ] Integração
+- [ ] Testes
+- [ ] Deploy
+
+---
+
 
 <div align="center">
 
