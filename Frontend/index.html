@@ -138,9 +138,13 @@
               </div>
 
               <div class="form-group">
-                <label class="form-checkbox-label">
-                  <input type="checkbox" required checked> Li e aceito os termos de uso e privacidade.
-                </label>
+                <div class="form-checkbox-label">
+                  <input type="checkbox" id="signup-legal-consent" required>
+                  <label for="signup-legal-consent">Li e aceito os</label>
+                  <button type="button" class="legal-link" data-open-modal="modal-terms">Termos de Uso</button>
+                  e a
+                  <button type="button" class="legal-link" data-open-modal="modal-privacy">Política de Privacidade</button>.
+                </div>
               </div>
 
               <button type="submit" class="btn btn-primary">Criar minha conta</button>
@@ -1259,6 +1263,78 @@
       </div>
     </div>
 
+    <!-- Documentos legais: conteúdo demonstrativo para validação do fluxo no front-end. -->
+    <div id="modal-terms" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="terms-title">
+      <div class="modal-container legal-modal">
+        <div class="modal-header"><div id="terms-title" class="modal-title">Termos de Uso</div><button type="button" class="modal-close" aria-label="Fechar termos">&times;</button></div>
+        <div class="modal-body legal-content">
+          <p class="legal-updated">Última atualização: 25 de julho de 2026</p>
+          <h3>1. Uso do FinGuardian AI</h3>
+          <p>O FinGuardian AI ajuda você a organizar informações financeiras, acompanhar movimentações e visualizar recomendações. As informações exibidas não constituem recomendação de investimento, crédito ou aconselhamento financeiro profissional.</p>
+          <h3>2. Responsabilidade pelas informações</h3>
+          <p>Você é responsável por conferir os dados informados e por revisar qualquer sugestão antes de confirmar uma movimentação. O assistente Fin nunca deve salvar informações sem sua confirmação.</p>
+          <h3>3. Conta e acesso</h3>
+          <p>Mantenha sua senha em sigilo, não compartilhe seu acesso e comunique qualquer uso indevido da conta. Na integração com o back-end, a sessão deverá usar autenticação segura e expiração de token.</p>
+          <h3>4. Alterações</h3>
+          <p>Estes termos podem ser atualizados quando houver mudanças relevantes no produto. A nova versão será apresentada antes de novo aceite quando necessário.</p>
+        </div>
+        <div class="modal-footer"><button type="button" class="btn btn-primary" data-close-modal="true">Entendi</button></div>
+      </div>
+    </div>
+
+    <div id="modal-privacy" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="privacy-title">
+      <div class="modal-container legal-modal">
+        <div class="modal-header"><div id="privacy-title" class="modal-title">Política de Privacidade</div><button type="button" class="modal-close" aria-label="Fechar política de privacidade">&times;</button></div>
+        <div class="modal-body legal-content">
+          <p class="legal-updated">Última atualização: 25 de julho de 2026</p>
+          <h3>1. Dados tratados</h3>
+          <p>O FinGuardian AI trata dados cadastrais e financeiros fornecidos por você, como nome, e-mail, contas, transações, metas e preferências. No protótipo local, essas informações ficam apenas no navegador.</p>
+          <h3>2. Finalidade</h3>
+          <p>Usamos esses dados para exibir seu painel, organizar movimentações, gerar análises e apresentar recomendações. O tratamento futuro no back-end deverá observar a LGPD, controles de acesso e registros de auditoria.</p>
+          <h3>3. Seus direitos</h3>
+          <p>Você poderá solicitar acesso, correção, portabilidade ou exclusão dos seus dados, respeitadas as obrigações legais. A área de Segurança e privacidade reúne essas opções no protótipo.</p>
+          <h3>4. Proteção</h3>
+          <p>Na versão integrada, dados deverão trafegar por HTTPS, senhas deverão ser armazenadas somente com hash seguro e cookies de autenticação deverão usar atributos Secure, HttpOnly e SameSite.</p>
+        </div>
+        <div class="modal-footer"><button type="button" class="btn btn-primary" data-close-modal="true">Entendi</button></div>
+      </div>
+    </div>
+
+    <div id="modal-security-privacy" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="security-title">
+      <div class="modal-container security-modal">
+        <div class="modal-header"><div><div id="security-title" class="modal-title">Segurança e privacidade</div><p class="modal-subtitle">Controle seus dados, acesso e preferências de privacidade.</p></div><button type="button" class="modal-close" aria-label="Fechar segurança e privacidade">&times;</button></div>
+        <div class="modal-body">
+          <section class="security-section">
+            <div class="security-password-block"><h3>Proteção da conta</h3><p>Escolha uma nova senha. Na integração, a alteração será enviada por conexão segura ao back-end.</p><div class="security-password-fields"><input type="password" id="security-new-password" class="form-input" placeholder="Nova senha (mínimo 8 caracteres)"><input type="password" id="security-confirm-password" class="form-input" placeholder="Confirme a nova senha"></div></div>
+            <button type="button" id="btn-security-change-password" class="btn btn-outline btn-sm">Atualizar senha</button>
+          </section>
+          <section class="security-section">
+            <div><h3>Verificação em duas etapas</h3><p>Adiciona uma confirmação extra ao entrar em sua conta.</p></div>
+            <label class="profile-switch"><input type="checkbox" id="security-2fa-toggle"><span></span></label>
+          </section>
+          <section class="security-section">
+            <div><h3>Privacidade de valores</h3><p>Oculta valores financeiros por padrão ao abrir o painel.</p></div>
+            <label class="profile-switch"><input type="checkbox" id="security-hide-values-toggle"><span></span></label>
+          </section>
+          <section class="security-section security-section-actions">
+            <div><h3>Seus dados</h3><p>Baixe uma cópia dos dados demonstrativos ou solicite exclusão quando o back-end estiver integrado.</p></div>
+            <div class="security-actions"><button type="button" id="btn-export-data" class="btn btn-outline btn-sm">Exportar dados</button><button type="button" id="btn-delete-data-request" class="btn btn-danger btn-sm">Solicitar exclusão</button></div>
+          </section>
+          <p class="security-note">Neste protótipo, as preferências são salvas somente neste navegador. A autenticação real, o hash de senha, a validação de sessão e a exclusão efetiva serão responsabilidade do back-end.</p>
+        </div>
+        <div class="modal-footer"><button type="button" class="btn btn-primary" data-close-modal="true">Concluir</button></div>
+      </div>
+    </div>
+
+  </div>
+
+  <aside id="cookie-banner" class="cookie-banner" aria-live="polite" hidden>
+    <div><strong>Usamos cookies essenciais</strong><p>Utilizamos cookies e armazenamento local para manter sua sessão, preferências e segurança. Você pode aceitar todos ou escolher suas preferências.</p><button type="button" class="legal-link" data-open-modal="modal-privacy">Ler Política de Privacidade</button></div>
+    <div class="cookie-actions"><button type="button" id="btn-cookie-settings" class="btn btn-outline btn-sm">Preferências</button><button type="button" id="btn-cookie-essential" class="btn btn-outline btn-sm">Somente essenciais</button><button type="button" id="btn-cookie-accept" class="btn btn-primary btn-sm">Aceitar todos</button></div>
+  </aside>
+
+  <div id="cookie-preferences" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="cookie-title">
+    <div class="modal-container cookie-modal"><div class="modal-header"><div id="cookie-title" class="modal-title">Preferências de cookies</div><button type="button" class="modal-close" aria-label="Fechar preferências de cookies">&times;</button></div><div class="modal-body"><div class="cookie-preference"><div><strong>Essenciais</strong><p>Necessários para segurança, sessão e funcionamento da aplicação.</p></div><span class="badge badge-positive">Sempre ativos</span></div><label class="cookie-preference"><div><strong>Funcionais</strong><p>Guardam preferências como tema, notificações e opções de visualização.</p></div><input type="checkbox" id="cookie-functional-toggle" checked></label><label class="cookie-preference"><div><strong>Analíticos</strong><p>Permitem medir uso e melhorar a experiência. Não são usados neste protótipo.</p></div><input type="checkbox" id="cookie-analytics-toggle"></label></div><div class="modal-footer"><button type="button" id="btn-cookie-save" class="btn btn-primary">Salvar preferências</button></div></div>
   </div>
 
   <!-- Script JS da Aplicação -->

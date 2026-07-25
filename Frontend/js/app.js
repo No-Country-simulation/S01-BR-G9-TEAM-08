@@ -17,7 +17,10 @@
     RECOMMENDATIONS: 'finguardian_recommendations',
     ANALYSIS_HISTORY: 'finguardian_analysis_history',
     PREFERENCES: 'finguardian_preferences',
-    AUTH: 'finguardian_auth_token'
+    AUTH: 'finguardian_auth_token',
+    COOKIE_CONSENT: 'finguardian_cookie_consent',
+    LEGAL_CONSENT: 'finguardian_legal_consent',
+    SECURITY: 'finguardian_security_preferences'
   };
 
   // --- Dados de Demonstração Iniciais (Figma Exact Values) ---
@@ -358,7 +361,7 @@
         </tr>
       `).join('');
     },
-
+    
     initFilters: function() {
       const fillFilter = (id, values, label) => {
         const select = document.getElementById(id);
@@ -770,6 +773,12 @@
           State.user.email = email;
           StorageService.set(STORAGE_KEYS.USER, State.user);
         }
+        // PONTO DE INTEGRAÇÃO FUTURA: enviar versões aceitas e data do aceite à API.
+        StorageService.set(STORAGE_KEYS.LEGAL_CONSENT, {
+          termsVersion: '2026-07-25',
+          privacyVersion: '2026-07-25',
+          acceptedAt: new Date().toISOString()
+        });
         Toast.show('Conta criada! Complete a configuração de contas.');
         document.getElementById('auth-layout').style.display = 'none';
         document.getElementById('main-app-layout').style.display = 'flex';
@@ -1071,6 +1080,20 @@
 
     // Botão Ocultar / Exibir valores
     (function () {
+      document.getElementById('btn-save-preferences')?.addEventListener('click', () => {
+        const passwordInput = document.getElementById('prof-password-input');
+        if (!passwordInput?.value) return;
+        if (passwordInput.value.length < 8) {
+          Toast.show('A nova senha deve ter pelo menos 8 caracteres.', 'warning');
+          passwordInput.focus();
+          return;
+        }
+        // PONTO DE INTEGRAÇÃO FUTURA: enviar senha via HTTPS para endpoint autenticado.
+        const security = StorageService.get(STORAGE_KEYS.SECURITY) || {};
+        security.passwordChangeRequestedAt = new Date().toISOString();
+        StorageService.set(STORAGE_KEYS.SECURITY, security);
+        passwordInput.value = '';
+      });
       let hidden = false;
       const btn = document.getElementById('btn-toggle-values');
       if (!btn) return;
@@ -1118,11 +1141,7 @@
       } else if (action === 'contas') {
         Router.navigate('contas');
       } else if (action === 'seguranca') {
-        Router.navigate('perfil');
-        setTimeout(() => {
-          const pwdInput = document.getElementById('prof-password-input');
-          if (pwdInput) { pwdInput.focus(); pwdInput.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
-        }, 100);
+        // O painel completo é aberto pelo listener de configurações abaixo.
       } else if (action === 'tema') {
         const themeSelect = document.getElementById('profile-theme-inline');
         if (themeSelect) themeSelect.focus();
@@ -1322,7 +1341,10 @@
       const action = e.target.closest('[data-profile-action]'); if (!action) return;
       const type = action.dataset.profileAction;
       if (type === 'dados-pessoais') openProfileForm();
-      else if (type === 'seguranca') document.getElementById('prof-password-input')?.focus();
+      else if (type === 'seguranca') {
+        const securityModal = document.getElementById('modal-security-privacy');
+        if (securityModal) securityModal.classList.add('active');
+      }
       else if (type === 'tema') document.getElementById('profile-theme-inline')?.focus();
     });
     // modal-new-account clear is handled globally or on open
@@ -1333,6 +1355,94 @@
         modal.classList.remove('active');
       });
     });
+
+    const getSecurityPreferences = () => StorageService.get(STORAGE_KEYS.SECURITY) || {
+      twoFactorEnabled: false,
+      hideValuesOnOpen: false
+    };
+    const applySecurityPreferences = function () {
+      const preferences = getSecurityPreferences();
+      document.body.classList.toggle('privacy-values-hidden', Boolean(preferences.hideValuesOnOpen));
+      const twoFactor = document.getElementById('security-2fa-toggle');
+      const hideValues = document.getElementById('security-hide-values-toggle');
+      if (twoFactor) twoFactor.checked = Boolean(preferences.twoFactorEnabled);
+      if (hideValues) hideValues.checked = Boolean(preferences.hideValuesOnOpen);
+    };
+    document.getElementById('security-2fa-toggle')?.addEventListener('change', function () {
+      const preferences = getSecurityPreferences();
+      preferences.twoFactorEnabled = this.checked;
+      StorageService.set(STORAGE_KEYS.SECURITY, preferences);
+      Toast.show(this.checked ? 'Verificação em duas etapas marcada para ativação na integração.' : 'Verificação em duas etapas desativada.');
+    });
+    document.getElementById('security-hide-values-toggle')?.addEventListener('change', function () {
+      const preferences = getSecurityPreferences();
+      preferences.hideValuesOnOpen = this.checked;
+      StorageService.set(STORAGE_KEYS.SECURITY, preferences);
+      applySecurityPreferences();
+      Toast.show(this.checked ? 'Valores serão ocultados ao abrir o painel.' : 'Valores visíveis ao abrir o painel.');
+    });
+    document.getElementById('btn-security-change-password')?.addEventListener('click', function () {
+      const password = document.getElementById('security-new-password')?.value || '';
+      const confirmation = document.getElementById('security-confirm-password')?.value || '';
+      if (password.length < 8) {
+        Toast.show('A nova senha deve ter pelo menos 8 caracteres.', 'warning');
+        return;
+      }
+      if (password !== confirmation) {
+        Toast.show('A confirmação de senha não confere.', 'warning');
+        return;
+      }
+      // PONTO DE INTEGRAÇÃO FUTURA: enviar a senha somente por HTTPS para endpoint autenticado.
+      const preferences = getSecurityPreferences();
+      preferences.passwordChangeRequestedAt = new Date().toISOString();
+      StorageService.set(STORAGE_KEYS.SECURITY, preferences);
+      document.getElementById('security-new-password').value = '';
+      document.getElementById('security-confirm-password').value = '';
+      Toast.show('Alteração de senha preparada para a integração segura.');
+    });
+    document.getElementById('btn-export-data')?.addEventListener('click', function () {
+      const exportData = {
+        exportedAt: new Date().toISOString(),
+        user: State.user,
+        accounts: State.accounts,
+        transactions: State.transactions,
+        diary: State.diary,
+        shopping: State.shopping
+      };
+      const file = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(file);
+      link.download = 'finguardian-meus-dados.json';
+      link.click();
+      URL.revokeObjectURL(link.href);
+      Toast.show('Cópia dos dados demonstrativos preparada.');
+    });
+    document.getElementById('btn-delete-data-request')?.addEventListener('click', function () {
+      Toast.show('Solicitação registrada no protótipo. A exclusão real será tratada pela API.', 'warning');
+    });
+
+    const saveCookieConsent = function (choices) {
+      StorageService.set(STORAGE_KEYS.COOKIE_CONSENT, { ...choices, savedAt: new Date().toISOString() });
+      const banner = document.getElementById('cookie-banner');
+      if (banner) banner.hidden = true;
+      document.getElementById('cookie-preferences')?.classList.remove('active');
+      Toast.show('Preferências de cookies salvas.');
+    };
+    document.getElementById('btn-cookie-accept')?.addEventListener('click', () => saveCookieConsent({ essential: true, functional: true, analytics: true }));
+    document.getElementById('btn-cookie-essential')?.addEventListener('click', () => saveCookieConsent({ essential: true, functional: false, analytics: false }));
+    document.getElementById('btn-cookie-settings')?.addEventListener('click', () => document.getElementById('cookie-preferences')?.classList.add('active'));
+    document.getElementById('btn-cookie-save')?.addEventListener('click', () => saveCookieConsent({
+      essential: true,
+      functional: Boolean(document.getElementById('cookie-functional-toggle')?.checked),
+      analytics: Boolean(document.getElementById('cookie-analytics-toggle')?.checked)
+    }));
+    const cookieConsent = StorageService.get(STORAGE_KEYS.COOKIE_CONSENT);
+    if (!cookieConsent) document.getElementById('cookie-banner').hidden = false;
+    else {
+      document.getElementById('cookie-functional-toggle').checked = Boolean(cookieConsent.functional);
+      document.getElementById('cookie-analytics-toggle').checked = Boolean(cookieConsent.analytics);
+    }
+    applySecurityPreferences();
   }
 
   document.addEventListener('DOMContentLoaded', function () {
