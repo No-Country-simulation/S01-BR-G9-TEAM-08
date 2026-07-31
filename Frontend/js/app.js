@@ -16,6 +16,7 @@
     ALERTS: 'finguardian_alerts',
     RECOMMENDATIONS: 'finguardian_recommendations',
     ANALYSIS_HISTORY: 'finguardian_analysis_history',
+    DELETED_ANALYSES: 'finguardian_deleted_analyses',
     PREFERENCES: 'finguardian_preferences',
     AUTH: 'finguardian_auth_token',
     COOKIE_CONSENT: 'finguardian_cookie_consent',
@@ -104,7 +105,21 @@
       localStorage.setItem(STORAGE_KEYS.ALERTS, JSON.stringify(INITIAL_DEMO_DATA.alerts));
       localStorage.setItem(STORAGE_KEYS.RECOMMENDATIONS, JSON.stringify(INITIAL_DEMO_DATA.recommendations));
       localStorage.setItem(STORAGE_KEYS.ANALYSIS_HISTORY, JSON.stringify(INITIAL_DEMO_DATA.analysisHistory));
+      localStorage.setItem(STORAGE_KEYS.DELETED_ANALYSES, JSON.stringify([]));
       localStorage.setItem(STORAGE_KEYS.AUTH, 'demo_token_authenticated');
+    }
+  };
+
+  const NumberParser = {
+    value: function (value) {
+      if (typeof value === 'number') return Number.isFinite(value) ? value : 0;
+      if (value === null || value === undefined || value === '') return 0;
+      const raw = String(value).trim().replace(/[^\d,.-]/g, '');
+      const normalized = raw.includes(',')
+        ? raw.replace(/\./g, '').replace(',', '.')
+        : raw.replace(/,/g, '');
+      const parsed = Number(normalized);
+      return Number.isFinite(parsed) ? parsed : 0;
     }
   };
 
@@ -119,6 +134,7 @@
     alerts: [],
     recommendations: [],
     analysisHistory: [],
+    deletedAnalyses: [],
     currentView: 'dashboard',
     pendingAiSuggestion: null,
 
@@ -126,6 +142,58 @@
       this.user = StorageService.get(STORAGE_KEYS.USER);
       this.accounts = StorageService.get(STORAGE_KEYS.ACCOUNTS) || [];
       this.transactions = StorageService.get(STORAGE_KEYS.TRANSACTIONS) || [];
+      let financialValuesUpdated = false;
+      this.accounts.forEach(account => {
+        ['balance', 'creditLimit', 'overdraftLimit'].forEach(field => {
+          const normalized = NumberParser.value(account[field]);
+          if (account[field] !== normalized) {
+            account[field] = normalized;
+            financialValuesUpdated = true;
+          }
+        });
+      });
+      this.transactions.forEach(transaction => {
+        const normalized = NumberParser.value(transaction.amount);
+        if (transaction.amount !== normalized) {
+          transaction.amount = normalized;
+          financialValuesUpdated = true;
+        }
+      });
+      const legacyInitialTransactions = this.transactions.filter(transaction => transaction.origin === 'CADASTRO_CONTA');
+      if (legacyInitialTransactions.length) {
+        const remainingTransactions = this.transactions.filter(transaction => transaction.origin !== 'CADASTRO_CONTA');
+        legacyInitialTransactions.forEach(initialTransaction => {
+          const account = this.accounts.find(item => item.name === initialTransaction.account);
+          if (!account) return;
+          const initialBalance = NumberParser.value(initialTransaction.realBalance || initialTransaction.amount);
+          account.initialBalance = initialBalance;
+          let recalculatedBalance = initialBalance;
+          const accountTransactions = remainingTransactions
+            .filter(transaction => transaction.account === account.name || transaction.destinationAccount === account.name)
+            .sort((a, b) => String(a.date || '').localeCompare(String(b.date || '')) || String(a.id || '').localeCompare(String(b.id || '')));
+          accountTransactions.forEach(transaction => {
+            const amount = NumberParser.value(transaction.amount);
+            if (transaction.type === 'RECEITA' && transaction.account === account.name) recalculatedBalance += amount;
+            if (transaction.type === 'DESPESA' && transaction.account === account.name) recalculatedBalance -= amount;
+            if (transaction.type === 'TRANSFERENCIA' && transaction.account === account.name) recalculatedBalance -= amount;
+            if (transaction.type === 'TRANSFERENCIA' && transaction.destinationAccount === account.name) recalculatedBalance += amount;
+            if (transaction.type === 'AJUSTE_SALDO' && transaction.account === account.name) recalculatedBalance = NumberParser.value(transaction.realBalance);
+          });
+          account.balance = recalculatedBalance;
+        });
+        this.transactions = remainingTransactions;
+        financialValuesUpdated = true;
+      }
+      this.accounts.forEach(account => {
+        if (account.initialBalance === undefined || account.initialBalance === null) {
+          account.initialBalance = 0;
+          financialValuesUpdated = true;
+        }
+      });
+      if (financialValuesUpdated) {
+        StorageService.set(STORAGE_KEYS.ACCOUNTS, this.accounts);
+        StorageService.set(STORAGE_KEYS.TRANSACTIONS, this.transactions);
+      }
       this.debts = StorageService.get(STORAGE_KEYS.DEBTS) || [];
       this.diary = StorageService.get(STORAGE_KEYS.DIARY) || [];
       this.shopping = StorageService.get(STORAGE_KEYS.SHOPPING) || [];
@@ -140,6 +208,7 @@
       this.alerts = StorageService.get(STORAGE_KEYS.ALERTS) || [];
       this.recommendations = StorageService.get(STORAGE_KEYS.RECOMMENDATIONS) || [];
       this.analysisHistory = StorageService.get(STORAGE_KEYS.ANALYSIS_HISTORY) || [];
+      this.deletedAnalyses = StorageService.get(STORAGE_KEYS.DELETED_ANALYSES) || [];
     }
   };
 
@@ -215,8 +284,10 @@
     all: function () {
       State.reload();
       this.dashboard();
+      this.reports();
       this.transactions();
       this.accounts();
+      this.initFilters();
       this.analysis();
       this.alerts();
       this.recommendations();
@@ -241,10 +312,69 @@
       elEmail.forEach(el => el.textContent = State.user.email);
     },
 
+    categoryData: function (transactions) {
+      const palette = {
+        'Alimentação': '#0F766E',
+        'Moradia': '#2563EB',
+        'Transporte': '#B45309',
+        'Saúde': '#C93443',
+        'Educação': '#7C3AED',
+        'Lazer': '#0891B2'
+      };
+      const totals = {};
+      transactions.filter(t => t.type === 'DESPESA').forEach(t => {
+        totals[t.category] = (totals[t.category] || 0) + Number(t.amount || 0);
+      });
+      const total = Object.values(totals).reduce((sum, value) => sum + value, 0);
+      return Object.entries(totals)
+        .map(([label, value], index) => ({ label, value, pct: total ? Math.round((value / total) * 100) : 0, color: palette[label] || ['#0F766E', '#2563EB', '#B45309', '#C93443'][index % 4] }))
+        .sort((a, b) => b.value - a.value);
+    },
+
+    distributionChart: function (items, type = 'donut', className = '') {
+      if (!items.length) return '<div class="empty-state">Nenhuma despesa registrada no período.</div>';
+      const total = items.reduce((sum, item) => sum + item.value, 0);
+      const point = (angle, radius) => {
+        const radians = (angle - 90) * Math.PI / 180;
+        return { x: 100 + Math.cos(radians) * radius, y: 100 + Math.sin(radians) * radius };
+      };
+      let startAngle = 0;
+      const slices = items.map((item, index) => {
+        const sliceAngle = total ? (item.value / total) * 360 : 0;
+        const endAngle = startAngle + sliceAngle;
+        const outerStart = point(startAngle, 90);
+        const outerEnd = point(endAngle, 90);
+        const largeArc = sliceAngle > 180 ? 1 : 0;
+        const innerRadius = type === 'donut' ? 51 : 0;
+        const innerEnd = point(endAngle, innerRadius);
+        const innerStart = point(startAngle, innerRadius);
+        const path = type === 'donut'
+          ? `M ${outerStart.x} ${outerStart.y} A 90 90 0 ${largeArc} 1 ${outerEnd.x} ${outerEnd.y} L ${innerEnd.x} ${innerEnd.y} A ${innerRadius} ${innerRadius} 0 ${largeArc} 0 ${innerStart.x} ${innerStart.y} Z`
+          : `M 100 100 L ${outerStart.x} ${outerStart.y} A 90 90 0 ${largeArc} 1 ${outerEnd.x} ${outerEnd.y} Z`;
+        const midAngle = startAngle + sliceAngle / 2;
+        const labelPoint = point(midAngle, type === 'donut' ? 69 : 60);
+        const sliceId = `slice-${index}`;
+        startAngle = endAngle;
+        return { ...item, sliceId, path, labelX: labelPoint.x.toFixed(2), labelY: labelPoint.y.toFixed(2) };
+      });
+      return `
+        <div class="distribution-chart ${className} distribution-${type}">
+          <div class="distribution-visual">
+            <svg class="distribution-svg" viewBox="0 0 200 200" role="img" aria-label="Distribuição de gastos por categoria">
+              ${slices.map(slice => `<path class="distribution-slice" data-chart-slice="${slice.sliceId}" d="${slice.path}" fill="${slice.color}"><title>${slice.label}: ${slice.pct}% (${Formatters.currency(slice.value)})</title></path><text class="distribution-slice-label ${slice.pct < 8 ? 'is-small' : ''}" data-chart-slice="${slice.sliceId}" x="${slice.labelX}" y="${slice.labelY}">${slice.pct}%</text>`).join('')}
+            </svg>
+            ${type === 'donut' ? `<div class="distribution-hole"><strong>${Formatters.currency(total)}</strong><span>em gastos</span></div>` : ''}
+          </div>
+          <div class="distribution-legend">
+            ${slices.map(slice => `<button type="button" class="distribution-legend-item" data-chart-slice="${slice.sliceId}"><span class="legend-dot" style="background:${slice.color}"></span><span>${slice.label}</span><strong>${Formatters.currency(slice.value)}</strong></button>`).join('')}
+          </div>
+        </div>`;
+    },
+
     dashboard: function () {
-      const totalBalance = State.accounts.reduce((acc, a) => acc + (a.balance || 0), 0);
-      const totalIncome = State.transactions.filter(t => t.type === 'RECEITA').reduce((acc, t) => acc + t.amount, 0);
-      const totalExpense = State.transactions.filter(t => t.type === 'DESPESA').reduce((acc, t) => acc + t.amount, 0);
+      const totalBalance = State.accounts.reduce((acc, a) => acc + NumberParser.value(a.balance), 0);
+      const totalIncome = State.transactions.filter(t => t.type === 'RECEITA').reduce((acc, t) => acc + NumberParser.value(t.amount), 0);
+      const totalExpense = State.transactions.filter(t => t.type === 'DESPESA').reduce((acc, t) => acc + NumberParser.value(t.amount), 0);
       const incomeCommitment = State.user.monthlyIncome ? Math.round((totalExpense / State.user.monthlyIncome) * 100) : 0;
 
       document.getElementById('dash-total-balance').textContent = Formatters.currency(totalBalance);
@@ -278,6 +408,9 @@
         const categories = Object.keys(catTotals);
         if (categories.length === 0) {
           catContainer.innerHTML = '<div class="empty-state">Nenhuma despesa registrada.</div>';
+        } else if ((document.querySelector('.chart-type-btn.active')?.dataset.chartType || 'bars') !== 'bars') {
+          const chartType = document.querySelector('.chart-type-btn.active').dataset.chartType;
+          catContainer.innerHTML = this.distributionChart(this.categoryData(State.transactions), chartType, 'dashboard-distribution');
         } else {
           categories.forEach(cat => {
             const val = catTotals[cat];
@@ -299,22 +432,79 @@
       }
 
       // Tabela simplificada Figma
-      const recentTxs = [...State.transactions].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 5);
+      const recentTxs = [...State.transactions].sort((a, b) => FinancialStore.transactionTime(b) - FinancialStore.transactionTime(a)).slice(0, 5);
       const recentContainer = document.getElementById('dash-recent-transactions');
       if (recentContainer) {
         const typeLabels = { RECEITA: 'Receita', DESPESA: 'Despesa', TRANSFERENCIA: 'Transferência', AJUSTE_SALDO: 'Ajuste Saldo' };
         const typeColors = { RECEITA: 'var(--color-positive)', DESPESA: 'var(--color-risk)', TRANSFERENCIA: 'var(--color-secondary)', AJUSTE_SALDO: 'var(--color-warning)' };
         const typeSign  = { RECEITA: '+', DESPESA: '-', TRANSFERENCIA: '⇄', AJUSTE_SALDO: '~' };
-        recentContainer.innerHTML = recentTxs.map((t, i) => `
+        recentContainer.innerHTML = recentTxs.map((t, i) => {
+          const isInitialBalance = t.origin === 'CADASTRO_CONTA';
+          const displayType = isInitialBalance ? 'Saldo inicial' : (typeLabels[t.type] || t.type);
+          const displayClass = isInitialBalance ? 'SALDO_INICIAL' : t.type;
+          const displayColor = isInitialBalance ? 'var(--color-secondary)' : (typeColors[t.type] || 'var(--color-text-main)');
+          const displaySign = isInitialBalance ? '' : (typeSign[t.type] || '');
+          return `
           <tr style="animation: fadeSlideIn 0.3s ease both; animation-delay: ${i * 0.06}s">
-            <td><span class="transaction-type ${t.type}">${typeLabels[t.type] || t.type}</span></td>
+            <td><span class="transaction-type ${displayClass}">${displayType}</span></td>
             <td><strong>${t.description}</strong></td>
-            <td style="font-weight: 700; color: ${typeColors[t.type] || 'var(--color-text-main)'}">
-              ${typeSign[t.type] || ''} ${Formatters.currency(t.amount)}
+            <td style="font-weight: 700; color: ${displayColor}">
+              ${displaySign} ${Formatters.currency(t.amount)}
             </td>
           </tr>
-        `).join('');
+        `; }).join('');
       }
+    },
+
+    reports: function () {
+      const period = document.querySelector('.report-period-btn.active')?.dataset.reportPeriod || 'current';
+      const distributionType = document.querySelector('.report-distribution-btn.active')?.dataset.reportDistribution || 'donut';
+      const flowType = document.querySelector('.report-flow-btn.active')?.dataset.reportFlow || 'all';
+      const allTransactions = State.transactions || [];
+      const latestDate = allTransactions.map(t => t.date).filter(Boolean).sort().slice(-1)[0] || new Date().toISOString().slice(0, 10);
+      const latestMonth = latestDate.slice(0, 7);
+      const transactions = period === 'current' ? allTransactions.filter(t => t.date?.startsWith(latestMonth)) : allTransactions;
+      const income = transactions.filter(t => t.type === 'RECEITA').reduce((sum, t) => sum + Number(t.amount || 0), 0);
+      const expense = transactions.filter(t => t.type === 'DESPESA').reduce((sum, t) => sum + Number(t.amount || 0), 0);
+      const net = income - expense;
+      const categories = this.categoryData(transactions);
+      const topCategory = categories[0];
+
+      const setText = (id, value) => { const element = document.getElementById(id); if (element) element.textContent = value; };
+      setText('report-total-income', Formatters.currency(income));
+      setText('report-total-expense', Formatters.currency(expense));
+      setText('report-net-result', Formatters.currency(net));
+      setText('report-net-detail', net >= 0 ? 'Resultado positivo no período' : 'Atenção ao saldo do período');
+      setText('report-top-category', topCategory?.label || '—');
+      setText('report-top-category-detail', topCategory ? `${Formatters.currency(topCategory.value)} · ${topCategory.pct}% das despesas` : 'Nenhuma despesa no período');
+
+      const donut = document.getElementById('report-expense-donut');
+      if (donut) donut.innerHTML = this.distributionChart(categories, distributionType, 'report-distribution');
+
+      const byDay = {};
+      transactions.filter(t => t.type === 'RECEITA' || t.type === 'DESPESA').forEach(t => {
+        if (!byDay[t.date]) byDay[t.date] = { income: 0, expense: 0 };
+        if (t.type === 'RECEITA') byDay[t.date].income += Number(t.amount || 0);
+        else byDay[t.date].expense += Number(t.amount || 0);
+      });
+      const days = Object.entries(byDay).sort(([a], [b]) => a.localeCompare(b)).filter(([, values]) => flowType === 'all' || (flowType === 'income' ? values.income > 0 : values.expense > 0));
+      const peak = Math.max(1, ...days.flatMap(([, values]) => flowType === 'income' ? [values.income] : (flowType === 'expense' ? [values.expense] : [values.income, values.expense])));
+      const cashflow = document.getElementById('report-cashflow-chart');
+      if (cashflow) cashflow.innerHTML = days.length ? `<div class="cashflow-legend">${flowType !== 'expense' ? '<span><i class="legend-dot income-dot"></i>Entradas</span>' : ''}${flowType !== 'income' ? '<span><i class="legend-dot expense-dot"></i>Saídas</span>' : ''}</div><div class="cashflow-bars">${days.map(([date, values]) => `<div class="cashflow-day report-highlight-item"><div class="cashflow-columns">${flowType !== 'expense' ? `<span class="cashflow-bar income" style="height:${Math.max(values.income ? 9 : 0, (values.income / peak) * 150)}px" title="Entradas: ${Formatters.currency(values.income)}"></span>` : ''}${flowType !== 'income' ? `<span class="cashflow-bar expense" style="height:${Math.max(values.expense ? 9 : 0, (values.expense / peak) * 150)}px" title="Saídas: ${Formatters.currency(values.expense)}"></span>` : ''}</div><span>${date.slice(8, 10)}/${date.slice(5, 7)}</span></div>`).join('')}</div>` : '<div class="empty-state">Nenhuma movimentação no período.</div>';
+
+      const categoryBars = document.getElementById('report-category-bars');
+      if (categoryBars) categoryBars.innerHTML = categories.length ? categories.map(item => `<div class="report-bar-item report-highlight-item"><div><span>${item.label}</span><strong>${Formatters.currency(item.value)}</strong></div><div class="report-bar-track"><span style="width:${item.pct}%; background:${item.color}"></span></div></div>`).join('') : '<div class="empty-state">Nenhuma despesa no período.</div>';
+
+      const payments = {};
+      transactions.filter(t => t.type === 'RECEITA' || t.type === 'DESPESA').forEach(t => { const key = t.paymentMethod || 'Não informado'; payments[key] = (payments[key] || 0) + Number(t.amount || 0); });
+      const paymentEntries = Object.entries(payments).sort((a, b) => b[1] - a[1]);
+      const paymentTotal = paymentEntries.reduce((sum, [, value]) => sum + value, 0);
+      const payment = document.getElementById('report-payment-chart');
+      if (payment) payment.innerHTML = paymentEntries.length ? paymentEntries.map(([label, value]) => { const pct = Math.round((value / paymentTotal) * 100); return `<div class="payment-row report-highlight-item"><span>${label}</span><div class="payment-meter"><i style="width:${pct}%"></i></div><strong>${pct}%</strong></div>`; }).join('') : '<div class="empty-state">Nenhuma movimentação no período.</div>';
+
+      const accountTotal = State.accounts.reduce((sum, account) => sum + Number(account.balance || 0), 0);
+      const accounts = document.getElementById('report-accounts-chart');
+      if (accounts) accounts.innerHTML = State.accounts.length ? State.accounts.map((account, index) => { const pct = accountTotal ? Math.max(0, Math.round((Number(account.balance || 0) / accountTotal) * 100)) : 0; return `<div class="account-distribution-item report-highlight-item"><div><span class="account-color account-color-${index % 4}"></span><strong>${account.name}</strong><small>${account.institution}</small></div><div class="account-distribution-value"><strong>${Formatters.currency(account.balance)}</strong><span>${pct}% do saldo</span></div><div class="account-distribution-track"><i class="account-color-${index % 4}" style="width:${pct}%"></i></div></div>`; }).join('') : '<div class="empty-state">Nenhuma conta cadastrada.</div>';
     },
 
     transactions: function () {
@@ -336,7 +526,7 @@
         return matchesQuery && matchesType && (accountFilter === 'ALL' || t.account === accountFilter) && (categoryFilter === 'ALL' || t.category === categoryFilter) && (paymentFilter === 'ALL' || t.paymentMethod === paymentFilter) && (!from || t.date >= from) && (!to || t.date <= to);
       });
 
-      filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
+      filtered.sort((a, b) => FinancialStore.transactionTime(b) - FinancialStore.transactionTime(a));
 
       if (filtered.length === 0) {
         container.innerHTML = '<tr><td colspan="6" class="empty-state">Nenhuma movimentação encontrada.</td></tr>';
@@ -347,29 +537,38 @@
       const typeSign = { 'RECEITA': '+', 'DESPESA': '-', 'TRANSFERENCIA': '⇄', 'AJUSTE_SALDO': '~' };
       const typeColors = { 'RECEITA': 'var(--color-positive)', 'DESPESA': 'var(--color-risk)', 'TRANSFERENCIA': 'var(--color-info)', 'AJUSTE_SALDO': 'var(--color-warning)' };
 
-      container.innerHTML = filtered.map(t => `
+      container.innerHTML = filtered.map(t => {
+        const isInitialBalance = t.origin === 'CADASTRO_CONTA';
+        const displayType = isInitialBalance ? 'Saldo inicial' : (typeLabels[t.type] || t.type);
+        const displayClass = isInitialBalance ? 'SALDO_INICIAL' : t.type;
+        const displayColor = isInitialBalance ? 'var(--color-secondary)' : (typeColors[t.type] || 'var(--color-text-main)');
+        const displaySign = isInitialBalance ? '' : (typeSign[t.type] || '');
+        return `
         <tr>
-          <td><span class="transaction-type ${t.type}">${typeLabels[t.type] || t.type}</span></td>
+          <td><span class="transaction-type ${displayClass}">${displayType}</span></td>
           <td><strong>${t.description}</strong></td>
           <td><span class="badge badge-info transaction-category">${t.category}</span></td>
           <td>${t.account}</td>
           <td>${Formatters.date(t.date)}</td>
-          <td style="font-weight: 700; color: ${typeColors[t.type] || 'var(--color-text-main)'}">
-            ${typeSign[t.type] || ''} ${Formatters.currency(t.amount)}
+          <td style="font-weight: 700; color: ${displayColor}">
+            ${displaySign} ${Formatters.currency(t.amount)}
           </td>
           <td class="table-actions"><button type="button" class="btn btn-outline btn-xs tx-action" data-tx-action="details" data-id="${t.id}">Detalhes</button><button type="button" class="btn btn-outline btn-xs tx-action" data-tx-action="edit" data-id="${t.id}">Editar</button><button type="button" class="btn btn-danger btn-xs tx-action" data-tx-action="delete" data-id="${t.id}">Excluir</button></td>
         </tr>
-      `).join('');
+      `; }).join('');
     },
     
     initFilters: function() {
       const fillFilter = (id, values, label) => {
         const select = document.getElementById(id);
-        if (!select || select.dataset.initialized) return;
+        if (!select) return;
+        const uniqueValues = [...new Set(values.filter(Boolean))].sort();
+        const signature = uniqueValues.join('|');
+        if (select.dataset.optionsSignature === signature) return;
         const current = select.value;
-        select.innerHTML = `<option value="ALL">${label}</option>` + [...new Set(values.filter(Boolean))].sort().map(v => `<option value="${v}">${v}</option>`).join('');
+        select.innerHTML = `<option value="ALL">${label}</option>` + uniqueValues.map(v => `<option value="${v}">${v}</option>`).join('');
         if ([...select.options].some(o => o.value === current)) select.value = current;
-        select.dataset.initialized = 'true';
+        select.dataset.optionsSignature = signature;
       };
       fillFilter('tx-account-filter', State.accounts.map(a => a.name), 'Todas as contas');
       fillFilter('tx-category-filter', State.transactions.map(t => t.category), 'Todas as categorias');
@@ -393,7 +592,7 @@
               <span>Limite: ${Formatters.currency(acc.creditLimit)}</span>
               <span>Cheque: ${Formatters.currency(acc.overdraftLimit)}</span>
             </div>
-            <div class="account-actions"><button type="button" class="btn btn-outline btn-xs account-action" data-account-action="edit" data-id="${acc.id}">Editar</button><button type="button" class="btn btn-outline btn-xs account-action" data-account-action="adjust" data-id="${acc.id}">Ajustar saldo</button><button type="button" class="btn btn-danger btn-xs account-action" data-account-action="deactivate" data-id="${acc.id}">${acc.status === 'Ativa' ? 'Desativar' : 'Reativar'}</button></div>
+            <div class="account-actions"><button type="button" class="btn btn-outline btn-xs account-action" data-account-action="edit" data-id="${acc.id}">Editar</button><button type="button" class="btn btn-outline btn-xs account-action" data-account-action="adjust" data-id="${acc.id}">Ajustar saldo</button><button type="button" class="btn btn-outline btn-xs account-action" data-account-action="deactivate" data-id="${acc.id}">${acc.status === 'Ativa' ? 'Desativar' : 'Reativar'}</button><button type="button" class="btn btn-danger btn-xs account-action" data-account-action="delete" data-id="${acc.id}">Excluir</button></div>
           </div>
         `).join('');
       }
@@ -423,16 +622,42 @@
     },
 
     analysis: function () {
-      const income = State.transactions.filter(t => t.type === 'RECEITA').reduce((s, t) => s + (t.amount || 0), 0);
-      const expenses = State.transactions.filter(t => t.type === 'DESPESA').reduce((s, t) => s + (t.amount || 0), 0);
+      const currentAnalysis = State.analysisHistory[0] || null;
+      const hasSelectedPeriod = Boolean(currentAnalysis?.periodStart && currentAnalysis?.periodEnd);
+      const analysisTransactions = hasSelectedPeriod
+        ? State.transactions.filter(transaction => transaction.date >= currentAnalysis.periodStart && transaction.date <= currentAnalysis.periodEnd)
+        : State.transactions;
+      const income = analysisTransactions.filter(t => t.type === 'RECEITA').reduce((s, t) => s + NumberParser.value(t.amount), 0);
+      const expenses = analysisTransactions.filter(t => t.type === 'DESPESA').reduce((s, t) => s + NumberParser.value(t.amount), 0);
       const debt = State.debts.reduce((s, d) => s + (d.remainingBalance || 0), 0);
-      const commitment = State.user.monthlyIncome ? Math.round(expenses / State.user.monthlyIncome * 100) : 0;
+      const incomeBase = income || NumberParser.value(State.user.monthlyIncome);
+      const commitment = incomeBase ? Math.round(expenses / incomeBase * 100) : 0;
+      const debtLevel = incomeBase ? Math.round((debt / incomeBase) * 1000) / 10 : 0;
+      const savingsRate = income ? ((income - expenses) / income) * 100 : 0;
+      const profile = currentAnalysis?.profile || (commitment > 70 ? 'EM RISCO' : commitment > 50 || debtLevel > 100 ? 'EM OBSERVAÇÃO' : 'SAUDÁVEL');
+      const confidence = currentAnalysis?.confidence ?? State.user.confidenceScore ?? 82;
       const set = (id, value) => { const el = document.getElementById(id); if (el) el.textContent = value; };
       set('analysis-income', Formatters.currency(income)); set('analysis-expenses', Formatters.currency(expenses)); set('analysis-balance', Formatters.currency(income - expenses)); set('analysis-debt', Formatters.currency(debt)); set('analysis-commitment', `${commitment}%`); set('analysis-risk', commitment > 70 ? 'Atenção' : 'Baixo');
-      const cats = {}; State.transactions.filter(t => t.type === 'DESPESA').forEach(t => cats[t.category] = (cats[t.category] || 0) + t.amount);
+      set('analysis-profile-status', profile);
+      set('analysis-confidence', `Confiança da classificação: ${confidence}%`);
+      set('analysis-debt-level', `${debtLevel.toLocaleString('pt-BR', { maximumFractionDigits: 1 })}%`);
+      set('analysis-savings-frequency', savingsRate >= 20 ? 'Alta' : savingsRate > 0 ? 'Média' : 'Baixa');
+      set('analysis-current-period', hasSelectedPeriod
+        ? `Período analisado: ${Formatters.date(currentAnalysis.periodStart)} a ${Formatters.date(currentAnalysis.periodEnd)}`
+        : 'Visualização atual: todas as movimentações');
+      const cats = {}; analysisTransactions.filter(t => t.type === 'DESPESA').forEach(t => cats[t.category] = (cats[t.category] || 0) + NumberParser.value(t.amount));
       const catSummary = document.getElementById('analysis-category-summary'); if (catSummary) catSummary.innerHTML = Object.entries(cats).sort((a,b) => b[1]-a[1]).slice(0,4).map(([name, value]) => `<span>${name}<strong>${Formatters.currency(value)}</strong></span>`).join('');
       const alertSummary = document.getElementById('analysis-alerts-summary'); if (alertSummary) alertSummary.innerHTML = State.alerts.filter(a => !a.read).slice(0,3).map(a => `<span class="analysis-alert-item">${a.title}</span>`).join('') || '<span>Nenhum alerta pendente.</span>';
-      const history = document.getElementById('analysis-history-list'); if (history) history.innerHTML = State.analysisHistory.length ? State.analysisHistory.map(item => `<div class="analysis-history-row"><span>${Formatters.date(item.date)}</span><strong>${Formatters.currency(item.balance)}</strong><span>${item.profile}</span></div>`).join('') : '<p class="empty-state">Nenhuma análise salva ainda.</p>';
+      const history = document.getElementById('analysis-history-list');
+      if (history) history.innerHTML = State.analysisHistory.length
+        ? State.analysisHistory.map(item => `<div class="analysis-history-row"><span>${item.periodStart && item.periodEnd ? `${Formatters.date(item.periodStart)} a ${Formatters.date(item.periodEnd)}` : Formatters.date(item.date)}</span><strong>${Formatters.currency(item.balance)}</strong><span>${item.profile}</span><button type="button" class="btn btn-danger btn-xs analysis-history-action" data-analysis-action="delete" data-id="${item.id}">Excluir</button></div>`).join('')
+        : '<p class="empty-state">Nenhuma análise salva ainda.</p>';
+      const deletedButton = document.getElementById('btn-toggle-deleted-analyses');
+      if (deletedButton) deletedButton.textContent = `Itens excluídos (${State.deletedAnalyses.length})`;
+      const deletedList = document.getElementById('analysis-deleted-list');
+      if (deletedList) deletedList.innerHTML = State.deletedAnalyses.length
+        ? `<div class="analysis-deleted-title">Análises excluídas — restaure uma análise caso tenha removido por engano.</div>${State.deletedAnalyses.map(item => `<div class="analysis-history-row analysis-deleted-row"><span>${item.periodStart && item.periodEnd ? `${Formatters.date(item.periodStart)} a ${Formatters.date(item.periodEnd)}` : Formatters.date(item.date)}</span><strong>${Formatters.currency(item.balance)}</strong><span>${item.profile}</span><button type="button" class="btn btn-outline btn-xs analysis-history-action" data-analysis-action="restore" data-id="${item.id}">Restaurar</button></div>`).join('')}`
+        : '<p class="empty-state">Nenhuma análise excluída.</p>';
       // Os indicadores desta tela seguem a composição visual aprovada no Figma.
       // A etapa de integração com a API substituirá estes valores demonstrativos.
     },
@@ -566,6 +791,143 @@
       if (document.getElementById('prof-theme-select')) document.getElementById('prof-theme-select').value = prefs.theme || 'claro';
       if (document.getElementById('profile-theme-inline')) document.getElementById('profile-theme-inline').value = prefs.theme || 'claro';
       if (document.getElementById('prof-notifications-input')) document.getElementById('prof-notifications-input').checked = prefs.notifications !== false;
+    }
+  };
+
+  // --- Atualização local do protótipo ---
+  // Mantém telas e localStorage sincronizados até a integração com a API.
+  const FinancialStore = {
+    today: function () {
+      return new Date().toISOString().split('T')[0];
+    },
+
+    transactionTime: function (transaction) {
+      const dateBase = Date.parse(`${transaction.date || '1970-01-01'}T00:00:00`) || 0;
+      const createdAt = Date.parse(transaction.createdAt || '');
+      if (Number.isFinite(createdAt)) return dateBase + (createdAt % 86400000);
+      const idTimestamp = Number(String(transaction.id || '').replace(/^tx_/, ''));
+      if (Number.isFinite(idTimestamp) && idTimestamp > 1000000000000) return dateBase + (idTimestamp % 86400000);
+      return dateBase;
+    },
+
+    refresh: function () {
+      StorageService.set(STORAGE_KEYS.ACCOUNTS, State.accounts);
+      StorageService.set(STORAGE_KEYS.TRANSACTIONS, State.transactions);
+      Render.all();
+    },
+
+    applyTransactionEffect: function (transaction, direction = 1) {
+      const amount = NumberParser.value(transaction.amount);
+      const sourceAccount = State.accounts.find(account => account.name === transaction.account);
+      if (!sourceAccount) return false;
+
+      if (transaction.type === 'RECEITA') sourceAccount.balance += amount * direction;
+      if (transaction.type === 'DESPESA') sourceAccount.balance -= amount * direction;
+      if (transaction.type === 'TRANSFERENCIA') {
+        const destinationAccount = State.accounts.find(account => account.name === transaction.destinationAccount);
+        if (!destinationAccount) return false;
+        sourceAccount.balance -= amount * direction;
+        destinationAccount.balance += amount * direction;
+      }
+      if (transaction.type === 'AJUSTE_SALDO') {
+        if (direction === 1) {
+          transaction.previousBalance = NumberParser.value(sourceAccount.balance);
+          sourceAccount.balance = NumberParser.value(transaction.realBalance);
+        } else {
+          if (transaction.previousBalance === undefined || transaction.previousBalance === null) return false;
+          sourceAccount.balance = NumberParser.value(transaction.previousBalance);
+        }
+      }
+      return true;
+    },
+
+    registerTransaction: function (transaction) {
+      const amount = NumberParser.value(transaction.amount);
+      const isBalanceAdjustment = transaction.type === 'AJUSTE_SALDO';
+      const realBalance = NumberParser.value(transaction.realBalance);
+      if (!transaction.account || (!isBalanceAdjustment && amount <= 0)) {
+        Toast.show('Informe uma conta e um valor maior que zero.', 'warning');
+        return false;
+      }
+      if (isBalanceAdjustment && !Number.isFinite(realBalance)) {
+        Toast.show('Informe o saldo real conferido.', 'warning');
+        return false;
+      }
+      if (!State.accounts.some(account => account.name === transaction.account)) {
+        Toast.show('A conta selecionada não foi encontrada.', 'warning');
+        return false;
+      }
+      if (transaction.type === 'TRANSFERENCIA' && !State.accounts.some(account => account.name === transaction.destinationAccount)) {
+        Toast.show('Escolha uma conta de destino válida.', 'warning');
+        return false;
+      }
+
+      transaction.amount = amount;
+      if (isBalanceAdjustment) transaction.realBalance = realBalance;
+      transaction.createdAt = transaction.createdAt || new Date().toISOString();
+      if (!this.applyTransactionEffect(transaction, 1)) return false;
+      State.transactions.push(transaction);
+      this.refresh();
+      return true;
+    },
+
+    deleteTransaction: function (transaction) {
+      if (!this.applyTransactionEffect(transaction, -1)) {
+        Toast.show('Não foi possível desfazer o efeito desta movimentação no saldo.', 'warning');
+        return false;
+      }
+      State.transactions = State.transactions.filter(item => item.id !== transaction.id);
+      this.refresh();
+      return true;
+    },
+
+    updateTransaction: function (transaction, changes) {
+      const previous = { ...transaction };
+      if (!this.applyTransactionEffect(previous, -1)) {
+        Toast.show('Não foi possível recalcular o saldo anterior.', 'warning');
+        return false;
+      }
+      Object.assign(transaction, changes);
+      if (!this.applyTransactionEffect(transaction, 1)) {
+        Object.assign(transaction, previous);
+        this.applyTransactionEffect(transaction, 1);
+        Toast.show('Não foi possível aplicar a movimentação atualizada.', 'warning');
+        return false;
+      }
+      this.refresh();
+      return true;
+    },
+
+    saveAccount: function (account, isEditing, options = {}) {
+      if (isEditing) {
+        const index = State.accounts.findIndex(item => item.id === account.id);
+        if (index === -1) return false;
+        State.accounts[index] = { ...State.accounts[index], ...account };
+      } else {
+        const declaredBalance = NumberParser.value(options.declaredBalance);
+        const addBalanceAsIncome = Boolean(options.addBalanceAsIncome && declaredBalance > 0);
+        account.initialBalance = addBalanceAsIncome ? 0 : declaredBalance;
+        account.balance = addBalanceAsIncome ? 0 : declaredBalance;
+        State.accounts.push(account);
+        if (addBalanceAsIncome) {
+          const openingIncome = {
+            id: 'tx_' + Date.now(),
+            type: 'RECEITA',
+            description: `Receita de abertura — ${account.name}`,
+            category: 'Outras receitas',
+            account: account.name,
+            amount: declaredBalance,
+            paymentMethod: 'Saldo informado no cadastro',
+            origin: 'CADASTRO_CONTA_COMO_RECEITA',
+            date: this.today(),
+            createdAt: new Date().toISOString()
+          };
+          this.applyTransactionEffect(openingIncome, 1);
+          State.transactions.push(openingIncome);
+        }
+      }
+      this.refresh();
+      return true;
     }
   };
 
@@ -722,18 +1084,9 @@
         origin: 'CONVERSA_IA'
       };
 
-      State.transactions.push(newTx);
-      const targetAccount = State.accounts.find(item => item.name === newTx.account);
-      if (targetAccount) {
-        if (newTx.type === 'RECEITA') targetAccount.balance += newTx.amount;
-        if (newTx.type === 'DESPESA') targetAccount.balance -= newTx.amount;
-        StorageService.set(STORAGE_KEYS.ACCOUNTS, State.accounts);
-      }
-
-      StorageService.set(STORAGE_KEYS.TRANSACTIONS, State.transactions);
+      if (!FinancialStore.registerTransaction(newTx)) return;
       finModal.classList.remove('active');
       showPromptStep(true);
-      Render.all();
       Toast.show('Movimentação salva com o Fin!');
     });
   }
@@ -878,19 +1231,9 @@
           date: new Date().toISOString().split('T')[0]
         };
 
-        State.transactions.push(newTx);
-
-        const targetAcc = State.accounts.find(a => a.name === newTx.account);
-        if (targetAcc) {
-          if (newTx.type === 'RECEITA') targetAcc.balance += newTx.amount;
-          else if (newTx.type === 'DESPESA') targetAcc.balance -= newTx.amount;
-          StorageService.set(STORAGE_KEYS.ACCOUNTS, State.accounts);
-        }
-
-        StorageService.set(STORAGE_KEYS.TRANSACTIONS, State.transactions);
+        if (!FinancialStore.registerTransaction(newTx)) return;
         document.getElementById('modal-ai-review').classList.remove('active');
         document.getElementById('ai-prompt-input').value = '';
-        Render.all();
         Toast.show('Movimentação revisada e salva com sucesso!');
       });
     }
@@ -919,20 +1262,8 @@
         if (newTx.type === 'TRANSFERENCIA') { newTx.destinationAccount = document.getElementById('manual-tx-destination')?.value; if (!newTx.destinationAccount || newTx.destinationAccount === newTx.account) { Toast.show('Escolha uma conta de destino diferente.', 'warning'); return; } }
         if (newTx.type === 'AJUSTE_SALDO') { newTx.reason = document.getElementById('manual-tx-adjustment-reason')?.value; newTx.realBalance = parseFloat(document.getElementById('manual-tx-real-balance')?.value) || 0; if (!newTx.reason) { Toast.show('Informe o motivo do ajuste.', 'warning'); return; } }
 
-        State.transactions.push(newTx);
-
-        const acc = State.accounts.find(a => a.name === newTx.account);
-        if (acc) {
-          if (newTx.type === 'RECEITA') acc.balance += newTx.amount;
-          else if (newTx.type === 'DESPESA') acc.balance -= newTx.amount;
-          else if (newTx.type === 'TRANSFERENCIA') { acc.balance -= newTx.amount; const dest = State.accounts.find(a => a.name === newTx.destinationAccount); if (dest) dest.balance += newTx.amount; }
-          else if (newTx.type === 'AJUSTE_SALDO') acc.balance = newTx.realBalance;
-          StorageService.set(STORAGE_KEYS.ACCOUNTS, State.accounts);
-        }
-
-        StorageService.set(STORAGE_KEYS.TRANSACTIONS, State.transactions);
+        if (!FinancialStore.registerTransaction(newTx)) return;
         manualTxForm.reset();
-        Render.all();
         Toast.show('Movimentação salva com sucesso!');
         Router.navigate('movimentacoes');
       });
@@ -943,24 +1274,36 @@
     if (newAccountForm) {
       newAccountForm.addEventListener('submit', function (e) {
         e.preventDefault();
+        const isEditing = Boolean(editingAccountId);
+        const declaredBalance = NumberParser.value(document.getElementById('acc-balance-input').value);
+        const addBalanceAsIncome = !isEditing && Boolean(document.getElementById('acc-balance-as-income')?.checked);
         const newAcc = {
           id: editingAccountId || 'acc_' + Date.now(),
           name: document.getElementById('acc-name-input').value,
           institution: document.getElementById('acc-inst-input').value,
           type: document.getElementById('acc-type-input').value,
           currency: 'BRL',
-          balance: parseFloat(document.getElementById('acc-balance-input').value) || 0,
-          creditLimit: parseFloat(document.getElementById('acc-limit-input').value) || 0,
-          overdraftLimit: parseFloat(document.getElementById('acc-overdraft-input').value) || 0,
+          balance: declaredBalance,
+          creditLimit: NumberParser.value(document.getElementById('acc-limit-input').value),
+          overdraftLimit: NumberParser.value(document.getElementById('acc-overdraft-input').value),
           status: 'Ativa'
         };
 
-        if (editingAccountId) { const index = State.accounts.findIndex(a => a.id === editingAccountId); if (index >= 0) State.accounts[index] = { ...State.accounts[index], ...newAcc }; editingAccountId = null; } else State.accounts.push(newAcc);
-        StorageService.set(STORAGE_KEYS.ACCOUNTS, State.accounts);
+        if (!FinancialStore.saveAccount(newAcc, isEditing, { declaredBalance, addBalanceAsIncome })) {
+          Toast.show('Não foi possível localizar a conta para atualização.', 'warning');
+          return;
+        }
+        editingAccountId = null;
         newAccountForm.reset();
+        const balanceAsIncomeInput = document.getElementById('acc-balance-as-income');
+        if (balanceAsIncomeInput) balanceAsIncomeInput.checked = false;
         document.getElementById('modal-new-account').classList.remove('active');
-        Render.all();
-        Toast.show(editingAccountId ? 'Conta financeira atualizada!' : 'Conta financeira criada!');
+        const successMessage = isEditing
+          ? 'Conta financeira atualizada!'
+          : addBalanceAsIncome
+            ? 'Conta criada e saldo registrado uma única vez como receita.'
+            : 'Conta criada com saldo inicial. O valor não foi contado como receita.';
+        Toast.show(successMessage);
       });
     }
 
@@ -998,6 +1341,7 @@
           category: document.getElementById('convert-shopping-category-select')?.value || 'Alimentação',
           amount: totalCost,
           date: new Date().toISOString().split('T')[0],
+          createdAt: new Date().toISOString(),
           paymentMethod: 'Cartão de Débito',
           obs: `Convertido de ${purchasedItems.length} itens.`
         };
@@ -1046,6 +1390,55 @@
       txSearchInput.addEventListener('input', () => Render.transactions());
     }
     ['tx-account-filter','tx-category-filter','tx-payment-filter','tx-date-from','tx-date-to'].forEach(id => document.getElementById(id)?.addEventListener('change', () => Render.transactions()));
+    document.querySelectorAll('.chart-type-btn').forEach(function (button) {
+      button.addEventListener('click', function () {
+        document.querySelectorAll('.chart-type-btn').forEach(function (chartButton) {
+          chartButton.classList.remove('active');
+          chartButton.setAttribute('aria-pressed', 'false');
+        });
+        button.classList.add('active');
+        button.setAttribute('aria-pressed', 'true');
+        Render.dashboard();
+      });
+    });
+    const setDistributionSliceState = function (chart, sliceId, active) {
+      if (!chart) return;
+      chart.classList.toggle('has-active-slice', active);
+      chart.querySelectorAll('[data-chart-slice]').forEach(function (element) {
+        const isCurrent = element.dataset.chartSlice === sliceId;
+        element.classList.toggle('is-active', active && isCurrent);
+        element.classList.toggle('is-dimmed', active && !isCurrent);
+      });
+    };
+    document.addEventListener('mouseover', function (event) {
+      const trigger = event.target.closest('[data-chart-slice]');
+      if (!trigger) return;
+      setDistributionSliceState(trigger.closest('.distribution-chart'), trigger.dataset.chartSlice, true);
+    });
+    document.addEventListener('mouseout', function (event) {
+      const trigger = event.target.closest('[data-chart-slice]');
+      if (!trigger) return;
+      const nextTrigger = event.relatedTarget?.closest?.('[data-chart-slice]');
+      if (nextTrigger && nextTrigger.closest('.distribution-chart') === trigger.closest('.distribution-chart')) return;
+      setDistributionSliceState(trigger.closest('.distribution-chart'), trigger.dataset.chartSlice, false);
+    });
+    [
+      ['.report-period-btn', 'reportPeriod'],
+      ['.report-distribution-btn', 'reportDistribution'],
+      ['.report-flow-btn', 'reportFlow']
+    ].forEach(function ([selector]) {
+      document.querySelectorAll(selector).forEach(function (button) {
+        button.addEventListener('click', function () {
+          document.querySelectorAll(selector).forEach(function (filterButton) {
+            filterButton.classList.remove('active');
+            filterButton.setAttribute('aria-pressed', 'false');
+          });
+          button.classList.add('active');
+          button.setAttribute('aria-pressed', 'true');
+          Render.reports();
+        });
+      });
+    });
     document.querySelectorAll('.transaction-filter-btn').forEach(function (button) {
       button.addEventListener('click', function () {
         document.querySelectorAll('.transaction-filter-btn').forEach(function (filterButton) {
@@ -1063,18 +1456,170 @@
       const txButton = e.target.closest('.tx-action');
       if (txButton) {
         const tx = State.transactions.find(item => item.id === txButton.dataset.id); if (!tx) return;
+        const transactionTypeLabel = tx.origin === 'CADASTRO_CONTA' ? 'Saldo inicial' : tx.type;
         const modal = document.getElementById('modal-transaction'); modal.classList.add('active'); editingTransactionId = tx.id;
-        document.getElementById('transaction-details-content').innerHTML = `<p><strong>${tx.description}</strong></p><p>${tx.type} · ${Formatters.currency(tx.amount)} · ${Formatters.date(tx.date)}</p><p>Categoria: ${tx.category || '—'} · Conta: ${tx.account || '—'} · Pagamento: ${tx.paymentMethod || '—'}</p><p>${tx.obs || tx.reason || ''}</p>`;
+        document.getElementById('transaction-details-content').innerHTML = `<p><strong>${tx.description}</strong></p><p>${transactionTypeLabel} · ${Formatters.currency(tx.amount)} · ${Formatters.date(tx.date)}</p><p>Categoria: ${tx.category || '—'} · Conta: ${tx.account || '—'} · Pagamento: ${tx.paymentMethod || '—'}</p><p>${tx.obs || tx.reason || ''}</p>`;
         document.getElementById('transaction-edit-form').style.display = txButton.dataset.txAction === 'edit' ? 'block' : 'none'; document.getElementById('btn-save-edit-transaction').style.display = txButton.dataset.txAction === 'edit' ? 'inline-flex' : 'none'; document.getElementById('btn-start-edit-transaction').style.display = txButton.dataset.txAction === 'edit' ? 'none' : 'inline-flex';
-        if (txButton.dataset.txAction === 'delete') { modal.classList.remove('active'); if (confirm('Excluir esta movimentação?')) { State.transactions = State.transactions.filter(item => item.id !== tx.id); StorageService.set(STORAGE_KEYS.TRANSACTIONS, State.transactions); Render.all(); Toast.show('Movimentação excluída.'); } }
+        if (txButton.dataset.txAction === 'delete') {
+          modal.classList.remove('active');
+          if (confirm('Excluir esta movimentação?') && FinancialStore.deleteTransaction(tx)) {
+            Toast.show('Movimentação excluída e saldo recalculado.');
+          }
+          return;
+        }
         if (txButton.dataset.txAction === 'edit') { document.getElementById('tx-edit-description').value = tx.description; document.getElementById('tx-edit-amount').value = tx.amount; document.getElementById('tx-edit-category').value = tx.category || ''; document.getElementById('tx-edit-payment').value = tx.paymentMethod || ''; document.getElementById('tx-edit-date').value = tx.date; }
       }
       const accountButton = e.target.closest('.account-action');
-      if (accountButton) { const acc = State.accounts.find(a => a.id === accountButton.dataset.id); if (!acc) return; if (accountButton.dataset.accountAction === 'deactivate') { acc.status = acc.status === 'Ativa' ? 'Inativa' : 'Ativa'; StorageService.set(STORAGE_KEYS.ACCOUNTS, State.accounts); Render.all(); } if (accountButton.dataset.accountAction === 'adjust') { const value = parseFloat(prompt('Informe o saldo real conferido: ', acc.balance)); const reason = prompt('Motivo do ajuste:'); if (!Number.isNaN(value) && reason) { acc.balance = value; State.transactions.push({ id:'tx_'+Date.now(), type:'AJUSTE_SALDO', description:'Ajuste de saldo', account:acc.name, amount:value, realBalance:value, reason, category:'Ajuste', date:new Date().toISOString().split('T')[0] }); StorageService.set(STORAGE_KEYS.ACCOUNTS, State.accounts); StorageService.set(STORAGE_KEYS.TRANSACTIONS, State.transactions); Render.all(); } } }
+      if (accountButton) {
+        const acc = State.accounts.find(account => account.id === accountButton.dataset.id);
+        if (!acc) return;
+        const action = accountButton.dataset.accountAction;
+
+        if (action === 'deactivate') {
+          acc.status = acc.status === 'Ativa' ? 'Inativa' : 'Ativa';
+          StorageService.set(STORAGE_KEYS.ACCOUNTS, State.accounts);
+          Render.all();
+          Toast.show(acc.status === 'Ativa' ? 'Conta reativada.' : 'Conta desativada.');
+          return;
+        }
+
+        if (action === 'delete') {
+          const relatedTransactions = State.transactions.filter(transaction => transaction.account === acc.name).length;
+          const message = relatedTransactions
+            ? `Excluir a conta “${acc.name}”? As ${relatedTransactions} movimentações do histórico serão preservadas.`
+            : `Excluir a conta “${acc.name}”?`;
+          if (!confirm(message)) return;
+          State.accounts = State.accounts.filter(account => account.id !== acc.id);
+          StorageService.set(STORAGE_KEYS.ACCOUNTS, State.accounts);
+          Render.all();
+          Toast.show('Conta excluída. O histórico de movimentações foi preservado.');
+          return;
+        }
+
+        if (action === 'adjust') {
+          const value = NumberParser.value(prompt('Informe o saldo real conferido: ', acc.balance));
+          const reason = prompt('Motivo do ajuste:');
+          if (reason) {
+            FinancialStore.registerTransaction({
+              id: 'tx_' + Date.now(), type: 'AJUSTE_SALDO', description: 'Ajuste de saldo',
+              account: acc.name, amount: Math.abs(value - NumberParser.value(acc.balance)),
+              realBalance: value, reason, category: 'Ajuste', date: FinancialStore.today()
+            });
+          }
+        }
+      }
     });
     document.getElementById('btn-start-edit-transaction')?.addEventListener('click', () => { document.getElementById('transaction-edit-form').style.display = 'block'; document.getElementById('btn-save-edit-transaction').style.display = 'inline-flex'; document.getElementById('btn-start-edit-transaction').style.display = 'none'; const tx = State.transactions.find(t => t.id === editingTransactionId); if (tx) { document.getElementById('tx-edit-description').value = tx.description; document.getElementById('tx-edit-amount').value = tx.amount; document.getElementById('tx-edit-category').value = tx.category || ''; document.getElementById('tx-edit-payment').value = tx.paymentMethod || ''; document.getElementById('tx-edit-date').value = tx.date; } });
-    document.getElementById('btn-save-edit-transaction')?.addEventListener('click', () => { const tx = State.transactions.find(t => t.id === editingTransactionId); if (!tx) return; tx.description = document.getElementById('tx-edit-description').value; tx.amount = parseFloat(document.getElementById('tx-edit-amount').value) || 0; tx.category = document.getElementById('tx-edit-category').value; tx.paymentMethod = document.getElementById('tx-edit-payment').value; tx.date = document.getElementById('tx-edit-date').value; StorageService.set(STORAGE_KEYS.TRANSACTIONS, State.transactions); document.getElementById('modal-transaction').classList.remove('active'); Render.all(); Toast.show('Movimentação atualizada.'); });
-    document.getElementById('btn-save-analysis')?.addEventListener('click', () => { const income = State.transactions.filter(t=>t.type==='RECEITA').reduce((s,t)=>s+t.amount,0); const expense = State.transactions.filter(t=>t.type==='DESPESA').reduce((s,t)=>s+t.amount,0); State.analysisHistory.unshift({ id:'analysis_'+Date.now(), date:new Date().toISOString().split('T')[0], balance:income-expense, profile:State.user.profileStatus }); StorageService.set(STORAGE_KEYS.ANALYSIS_HISTORY, State.analysisHistory); Render.all(); Toast.show('Análise salva no histórico.'); });
+    document.getElementById('btn-save-edit-transaction')?.addEventListener('click', () => {
+      const tx = State.transactions.find(t => t.id === editingTransactionId);
+      if (!tx) return;
+      const updated = FinancialStore.updateTransaction(tx, {
+        description: document.getElementById('tx-edit-description').value,
+        amount: NumberParser.value(document.getElementById('tx-edit-amount').value),
+        category: document.getElementById('tx-edit-category').value,
+        paymentMethod: document.getElementById('tx-edit-payment').value,
+        date: document.getElementById('tx-edit-date').value
+      });
+      if (!updated) return;
+      document.getElementById('modal-transaction').classList.remove('active');
+      Toast.show('Movimentação atualizada e saldo recalculado.');
+    });
+    const analysisForm = document.getElementById('generate-analysis-form');
+    const fillAnalysisPeriod = function () {
+      const end = new Date();
+      const start = new Date(end.getFullYear(), end.getMonth(), 1);
+      const toInputDate = date => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      };
+      const startInput = document.getElementById('analysis-period-start');
+      const endInput = document.getElementById('analysis-period-end');
+      if (startInput && !startInput.value) startInput.value = toInputDate(start);
+      if (endInput && !endInput.value) endInput.value = toInputDate(end);
+    };
+    document.getElementById('btn-generate-analysis')?.addEventListener('click', fillAnalysisPeriod);
+    analysisForm?.addEventListener('submit', function (event) {
+      event.preventDefault();
+      const periodStart = document.getElementById('analysis-period-start').value;
+      const periodEnd = document.getElementById('analysis-period-end').value;
+      if (!periodStart || !periodEnd || periodStart > periodEnd) {
+        Toast.show('Informe um período válido para a análise.', 'warning');
+        return;
+      }
+
+      const transactions = State.transactions.filter(transaction => transaction.date >= periodStart && transaction.date <= periodEnd);
+      const income = transactions.filter(transaction => transaction.type === 'RECEITA').reduce((sum, transaction) => sum + NumberParser.value(transaction.amount), 0);
+      const expenses = transactions.filter(transaction => transaction.type === 'DESPESA').reduce((sum, transaction) => sum + NumberParser.value(transaction.amount), 0);
+      const debt = State.debts.reduce((sum, item) => sum + NumberParser.value(item.remainingBalance), 0);
+      const incomeBase = income || NumberParser.value(State.user.monthlyIncome);
+      const commitment = incomeBase ? Math.round((expenses / incomeBase) * 100) : 0;
+      const debtLevel = incomeBase ? (debt / incomeBase) * 100 : 0;
+      const profile = commitment > 70 ? 'EM RISCO' : commitment > 50 || debtLevel > 100 ? 'EM OBSERVAÇÃO' : 'SAUDÁVEL';
+      const confidence = State.user.confidenceScore || 82;
+
+      State.analysisHistory.unshift({
+        id: 'analysis_' + Date.now(),
+        date: FinancialStore.today(),
+        createdAt: new Date().toISOString(),
+        periodStart,
+        periodEnd,
+        income,
+        expenses,
+        balance: income - expenses,
+        totalDebt: debt,
+        commitment,
+        debtLevel: Math.round(debtLevel * 10) / 10,
+        profile,
+        confidence
+      });
+      State.user.profileStatus = profile;
+      State.user.confidenceScore = confidence;
+      StorageService.set(STORAGE_KEYS.ANALYSIS_HISTORY, State.analysisHistory);
+      StorageService.set(STORAGE_KEYS.USER, State.user);
+      document.getElementById('modal-generate-analysis')?.classList.remove('active');
+      document.querySelector('.analysis-detail-grid')?.classList.add('analysis-details-visible');
+      document.querySelector('.analysis-history-card')?.classList.add('analysis-details-visible');
+      const detailsButton = document.getElementById('btn-analysis-details');
+      if (detailsButton) detailsButton.textContent = 'Ocultar detalhes';
+      Render.all();
+      Toast.show(transactions.length ? 'Nova análise gerada e salva no histórico.' : 'Análise gerada sem movimentações no período.', transactions.length ? 'success' : 'warning');
+    });
+    document.getElementById('btn-toggle-deleted-analyses')?.addEventListener('click', function () {
+      const deletedList = document.getElementById('analysis-deleted-list');
+      if (!deletedList) return;
+      deletedList.hidden = !deletedList.hidden;
+      this.textContent = deletedList.hidden
+        ? `Itens excluídos (${State.deletedAnalyses.length})`
+        : 'Ocultar itens excluídos';
+    });
+    document.addEventListener('click', function (event) {
+      const actionButton = event.target.closest('.analysis-history-action');
+      if (!actionButton) return;
+      const id = actionButton.dataset.id;
+      if (actionButton.dataset.analysisAction === 'delete') {
+        const analysis = State.analysisHistory.find(item => item.id === id);
+        if (!analysis) return;
+        State.analysisHistory = State.analysisHistory.filter(item => item.id !== id);
+        State.deletedAnalyses.unshift({ ...analysis, deletedAt: new Date().toISOString() });
+        StorageService.set(STORAGE_KEYS.ANALYSIS_HISTORY, State.analysisHistory);
+        StorageService.set(STORAGE_KEYS.DELETED_ANALYSES, State.deletedAnalyses);
+        Render.all();
+        Toast.show('Análise movida para itens excluídos. Você pode restaurá-la quando quiser.');
+      }
+      if (actionButton.dataset.analysisAction === 'restore') {
+        const analysis = State.deletedAnalyses.find(item => item.id === id);
+        if (!analysis) return;
+        State.deletedAnalyses = State.deletedAnalyses.filter(item => item.id !== id);
+        delete analysis.deletedAt;
+        State.analysisHistory.unshift(analysis);
+        StorageService.set(STORAGE_KEYS.ANALYSIS_HISTORY, State.analysisHistory);
+        StorageService.set(STORAGE_KEYS.DELETED_ANALYSES, State.deletedAnalyses);
+        Render.all();
+        Toast.show('Análise restaurada no histórico.');
+      }
+    });
     document.getElementById('btn-save-preferences')?.addEventListener('click', () => { StorageService.set(STORAGE_KEYS.PREFERENCES, { theme: document.getElementById('prof-theme-select').value, notifications: document.getElementById('prof-notifications-input').checked }); document.body.classList.toggle('theme-dark', document.getElementById('prof-theme-select').value === 'escuro'); Toast.show('Preferências salvas.'); });
     document.getElementById('profile-theme-inline')?.addEventListener('change', e => { const prefs = StorageService.get(STORAGE_KEYS.PREFERENCES) || {}; prefs.theme = e.target.value; StorageService.set(STORAGE_KEYS.PREFERENCES, prefs); document.body.classList.toggle('theme-dark', e.target.value === 'escuro'); if (document.getElementById('prof-theme-select')) document.getElementById('prof-theme-select').value = e.target.value; });
 
@@ -1156,7 +1701,43 @@
       if (document.getElementById('prof-notifications-input')) document.getElementById('prof-notifications-input').checked = this.checked;
       Toast.show(this.checked ? 'Notificações ativadas.' : 'Notificações desativadas.');
     });
-    document.addEventListener('click', function (e) { const button = e.target.closest('.account-action[data-account-action="edit"]'); if (!button) return; const acc = State.accounts.find(item => item.id === button.dataset.id); if (!acc) return; editingAccountId = acc.id; document.getElementById('acc-name-input').value = acc.name; document.getElementById('acc-inst-input').value = acc.institution; document.getElementById('acc-type-input').value = acc.type; document.getElementById('acc-balance-input').value = acc.balance; document.getElementById('acc-limit-input').value = acc.creditLimit; document.getElementById('acc-overdraft-input').value = acc.overdraftLimit; document.getElementById('modal-new-account').classList.add('active'); });
+    document.addEventListener('click', function (e) {
+      const button = e.target.closest('.account-action[data-account-action="edit"]');
+      if (!button) return;
+      const acc = State.accounts.find(item => item.id === button.dataset.id);
+      if (!acc) return;
+      editingAccountId = acc.id;
+      document.getElementById('acc-name-input').value = acc.name;
+      document.getElementById('acc-inst-input').value = acc.institution;
+      document.getElementById('acc-type-input').value = acc.type;
+      const balanceInput = document.getElementById('acc-balance-input');
+      balanceInput.value = acc.balance;
+      balanceInput.readOnly = true;
+      document.getElementById('acc-limit-input').value = acc.creditLimit;
+      document.getElementById('acc-overdraft-input').value = acc.overdraftLimit;
+      document.getElementById('account-balance-label').textContent = 'Saldo atual da conta (R$)';
+      document.getElementById('account-balance-helper').textContent = 'Para corrigir este valor, use a ação “Ajustar saldo” no cartão da conta.';
+      const incomeOption = document.getElementById('account-balance-income-option');
+      const incomeInput = document.getElementById('acc-balance-as-income');
+      if (incomeOption) incomeOption.hidden = true;
+      if (incomeInput) incomeInput.checked = false;
+      document.getElementById('modal-new-account').classList.add('active');
+    });
+
+    document.addEventListener('click', function (e) {
+      const button = e.target.closest('[data-open-modal="modal-new-account"]');
+      if (!button || button.closest('.account-action')) return;
+      editingAccountId = null;
+      newAccountForm?.reset();
+      const balanceInput = document.getElementById('acc-balance-input');
+      if (balanceInput) balanceInput.readOnly = false;
+      document.getElementById('account-balance-label').textContent = 'Saldo inicial da conta (R$)';
+      document.getElementById('account-balance-helper').textContent = 'Informe quanto existe na conta no momento do cadastro.';
+      const incomeOption = document.getElementById('account-balance-income-option');
+      const incomeInput = document.getElementById('acc-balance-as-income');
+      if (incomeOption) incomeOption.hidden = false;
+      if (incomeInput) incomeInput.checked = false;
+    });
 
     const diaryForm = document.getElementById('diary-new-note-form');
     if (diaryForm) {
@@ -1178,26 +1759,10 @@
       });
     }
 
-    document.querySelectorAll('.diary-type-choice').forEach(function (choice) {
-      choice.addEventListener('click', function () {
-        const selectedType = choice.dataset.diaryType;
-        if (selectedType === 'lista_compras') {
-          Router.navigate('lista-compras');
-          return;
-        }
-
-        document.querySelectorAll('.diary-type-choice').forEach(function (typeButton) {
-          typeButton.classList.remove('active');
-          typeButton.setAttribute('aria-pressed', 'false');
-        });
-        choice.classList.add('active');
-        choice.setAttribute('aria-pressed', 'true');
-
-        const typeSelect = document.getElementById('diary-type-select');
-        if (typeSelect && typeSelect.querySelector(`option[value="${selectedType}"]`)) {
-          typeSelect.value = selectedType;
-        }
-      });
+    document.getElementById('diary-type-select')?.addEventListener('change', function () {
+      if (this.value !== 'lista_compras') return;
+      this.value = 'anotacao';
+      Router.navigate('lista-compras');
     });
 
     const shoppingForm = document.getElementById('shopping-new-item-form');

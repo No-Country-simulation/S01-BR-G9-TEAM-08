@@ -10,7 +10,7 @@
     content="FinGuardian AI é a sua plataforma inteligente de gestão e análise financeira pessoal com auxílio de IA.">
 
   <!-- Estilos Globais e Design System Alinhado ao Figma -->
-  <link rel="stylesheet" href="css/styles.css?v=fin-assistant-6">
+  <link rel="stylesheet" href="css/styles.css?v=balance-income-fix-1">
 </head>
 
 <body>
@@ -210,6 +210,14 @@
             </a>
           </li>
           <li>
+            <a class="sidebar-link nav-trigger" data-view="relatorios">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 19V5m0 14h16M8 16v-5m4 5V8m4 8v-3" />
+              </svg>
+              Relatórios
+            </a>
+          </li>
+          <li>
             <a class="sidebar-link nav-trigger" data-view="diario">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round"
@@ -318,6 +326,14 @@
             <div class="card">
               <div class="card-header">
                 <div class="card-title">Gastos por Categoria</div>
+                <div class="chart-header-actions">
+                  <button type="button" class="btn btn-outline btn-sm nav-trigger chart-reports-link" data-view="relatorios">Ver relatórios</button>
+                  <div class="chart-type-filter" role="group" aria-label="Escolher visualização do gráfico">
+                    <button type="button" class="chart-type-btn active" data-chart-type="bars" aria-pressed="true">Barras</button>
+                    <button type="button" class="chart-type-btn" data-chart-type="donut" aria-pressed="false">Rosca</button>
+                    <button type="button" class="chart-type-btn" data-chart-type="pie" aria-pressed="false">Pizza</button>
+                  </div>
+                </div>
               </div>
               <div id="dash-category-breakdown">
                 <!-- Preenchido via JavaScript -->
@@ -375,6 +391,51 @@
             </div>
           </div>
 
+        </section>
+
+        <!-- VIEW: RELATÓRIOS E INDICADORES -->
+        <section id="view-relatorios" class="view-section">
+          <div class="welcome-bar report-welcome-bar">
+            <div>
+              <h1 class="welcome-title">Relatórios</h1>
+              <p class="welcome-subtitle">Visualize seus indicadores e encontre padrões nas movimentações.</p>
+            </div>
+            <div class="report-period-control">
+              <span>Período</span>
+              <div class="chart-type-filter" role="group" aria-label="Filtrar período dos relatórios">
+                <button type="button" class="report-period-btn active" data-report-period="current" aria-pressed="true">Mês atual</button>
+                <button type="button" class="report-period-btn" data-report-period="all" aria-pressed="false">Histórico</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="report-kpi-grid">
+            <div class="metric-card"><div class="metric-header"><span>Entradas</span><span class="badge badge-positive">Receitas</span></div><div id="report-total-income" class="metric-value metric-positive">R$ 0,00</div><div class="metric-detail">Total recebido no período</div></div>
+            <div class="metric-card"><div class="metric-header"><span>Saídas</span><span class="badge badge-risk">Despesas</span></div><div id="report-total-expense" class="metric-value metric-risk">R$ 0,00</div><div class="metric-detail">Total gasto no período</div></div>
+            <div class="metric-card"><div class="metric-header"><span>Resultado</span><span class="badge badge-accent">Saldo</span></div><div id="report-net-result" class="metric-value">R$ 0,00</div><div id="report-net-detail" class="metric-detail">Receitas menos despesas</div></div>
+            <div class="metric-card"><div class="metric-header"><span>Maior gasto</span><span class="badge badge-warning">Categoria</span></div><div id="report-top-category" class="metric-value metric-label">—</div><div id="report-top-category-detail" class="metric-detail">Nenhuma despesa no período</div></div>
+          </div>
+
+          <div class="report-grid report-grid-main">
+            <article class="card report-chart-card">
+              <div class="card-header"><div><div class="card-title">Despesas por categoria</div><p class="report-card-subtitle">Passe o mouse em uma categoria para destacá-la.</p></div><div class="chart-type-filter" role="group" aria-label="Escolher visualização do gráfico de despesas"><button type="button" class="report-distribution-btn active" data-report-distribution="donut" aria-pressed="true">Rosca</button><button type="button" class="report-distribution-btn" data-report-distribution="pie" aria-pressed="false">Pizza</button></div></div>
+              <div id="report-expense-donut" class="report-donut-chart"></div>
+            </article>
+            <article class="card report-chart-card">
+              <div class="card-header"><div><div class="card-title">Entradas e saídas no mês</div><p class="report-card-subtitle">Fluxo de caixa por dia com movimentação.</p></div><div class="chart-type-filter report-flow-filter" role="group" aria-label="Filtrar fluxo de caixa"><button type="button" class="report-flow-btn active" data-report-flow="all" aria-pressed="true">Todas</button><button type="button" class="report-flow-btn" data-report-flow="income" aria-pressed="false">Entradas</button><button type="button" class="report-flow-btn" data-report-flow="expense" aria-pressed="false">Saídas</button></div></div>
+              <div id="report-cashflow-chart" class="cashflow-chart"></div>
+            </article>
+          </div>
+
+          <div class="report-grid report-grid-secondary">
+            <article class="card report-chart-card"><div class="card-header"><div><div class="card-title">Gastos comparados</div><p class="report-card-subtitle">Categorias ordenadas pelo maior valor.</p></div></div><div id="report-category-bars" class="report-category-bars"></div></article>
+            <article class="card report-chart-card"><div class="card-header"><div><div class="card-title">Meios de pagamento</div><p class="report-card-subtitle">Como suas movimentações foram realizadas.</p></div></div><div id="report-payment-chart" class="payment-chart"></div></article>
+          </div>
+
+          <article class="card report-chart-card report-accounts-card">
+            <div class="card-header"><div><div class="card-title">Distribuição do saldo por conta</div><p class="report-card-subtitle">Saldo consolidado das contas ativas.</p></div><button type="button" class="btn btn-outline btn-sm nav-trigger" data-view="contas">Ver contas</button></div>
+            <div id="report-accounts-chart" class="account-distribution-chart"></div>
+          </article>
         </section>
 
 
@@ -620,14 +681,16 @@
             <div>
               <h1 class="welcome-title">Análise financeira</h1>
               <p class="welcome-subtitle">Resultado consolidado com apoio da inteligência artificial.</p>
+              <p id="analysis-current-period" class="analysis-period-label">Visualização atual: todas as movimentações</p>
             </div>
+            <button type="button" id="btn-generate-analysis" class="btn btn-primary" data-open-modal="modal-generate-analysis">Gerar nova análise</button>
           </div>
 
           <div class="analysis-grid">
             <article class="card analysis-card analysis-profile-card">
               <p class="analysis-eyebrow">Perfil financeiro</p>
-              <strong class="analysis-profile-status">EM OBSERVAÇÃO</strong>
-              <p class="analysis-confidence">Confiança da classificação: 82%</p>
+              <strong id="analysis-profile-status" class="analysis-profile-status">EM OBSERVAÇÃO</strong>
+              <p id="analysis-confidence" class="analysis-confidence">Confiança da classificação: 82%</p>
             </article>
 
             <article class="card analysis-card analysis-indicators-card">
@@ -635,11 +698,11 @@
               <dl class="analysis-indicators-list">
                 <div>
                   <dt>Endividamento</dt>
-                  <dd>25,5%</dd>
+                  <dd id="analysis-debt-level">25,5%</dd>
                 </div>
                 <div>
                   <dt>Frequência de poupança</dt>
-                  <dd>Média</dd>
+                  <dd id="analysis-savings-frequency">Média</dd>
                 </div>
               </dl>
             </article>
@@ -670,7 +733,7 @@
             <div class="card"><h2 class="analysis-card-title">Resumo do período</h2><div class="analysis-stat-list"><span>Receitas <strong id="analysis-income">R$ 0,00</strong></span><span>Despesas <strong id="analysis-expenses">R$ 0,00</strong></span><span>Saldo <strong id="analysis-balance">R$ 0,00</strong></span><span>Dívidas <strong id="analysis-debt">R$ 0,00</strong></span><span>Comprometimento <strong id="analysis-commitment">0%</strong></span><span>Risco <strong id="analysis-risk">Baixo</strong></span></div></div>
             <div class="card"><h2 class="analysis-card-title">Categorias e alertas</h2><div id="analysis-category-summary" class="analysis-summary-list"></div><div id="analysis-alerts-summary" class="analysis-summary-list"></div></div>
           </div>
-          <div class="card analysis-history-card"><div class="card-header"><div><h2 class="analysis-card-title">Histórico de análises</h2><p class="diary-card-subtitle">Compare resultados salvos ao longo do tempo.</p></div><button type="button" id="btn-save-analysis" class="btn btn-primary btn-sm">Salvar análise atual</button></div><div id="analysis-history-list"></div></div>
+          <div class="card analysis-history-card"><div class="card-header"><div><h2 class="analysis-card-title">Histórico de análises</h2><p class="diary-card-subtitle">Compare resultados gerados por período.</p></div><div class="analysis-history-actions"><button type="button" id="btn-toggle-deleted-analyses" class="btn btn-outline btn-sm">Itens excluídos (0)</button></div></div><div id="analysis-history-list"></div><div id="analysis-deleted-list" class="analysis-deleted-list" hidden></div></div>
         </section>
 
 
@@ -725,16 +788,6 @@
                 </div>
               </div>
 
-              <div class="diary-type-grid" role="group" aria-label="Tipo de entrada do diário">
-                <button type="button" class="diary-type-choice active" data-diary-type="anotacao">Anotação</button>
-                <button type="button" class="diary-type-choice" data-diary-type="lista_compras">Lista de compras</button>
-                <button type="button" class="diary-type-choice" data-diary-type="planejamento">Planejamento</button>
-                <button type="button" class="diary-type-choice" data-diary-type="meta">Meta</button>
-                <button type="button" class="diary-type-choice" data-diary-type="lembrete">Lembrete</button>
-                <button type="button" class="diary-type-choice" data-diary-type="gasto_futuro">Gasto futuro</button>
-                <button type="button" class="diary-type-choice" data-diary-type="nao_comprar_novamente">Não comprar novamente</button>
-              </div>
-
               <form id="diary-new-note-form">
                 <div class="form-group">
                   <label for="diary-title-input" class="form-label">Título</label>
@@ -746,6 +799,7 @@
                   <label for="diary-type-select" class="form-label">Tipo</label>
                   <select id="diary-type-select" class="form-select">
                     <option value="anotacao">Anotação</option>
+                    <option value="lista_compras">Lista de compras</option>
                     <option value="planejamento">Planejamento</option>
                     <option value="reflexão">Reflexão</option>
                     <option value="meta">Meta</option>
@@ -1162,6 +1216,41 @@
     </div>
 
 
+    <!-- Modal: Geração de análise financeira por período -->
+    <div id="modal-generate-analysis" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="generate-analysis-title">
+      <div class="modal-container analysis-period-modal">
+        <div class="modal-header">
+          <div>
+            <div id="generate-analysis-title" class="modal-title">Gerar nova análise</div>
+            <p class="modal-subtitle">Escolha o período que será consolidado.</p>
+          </div>
+          <button type="button" class="modal-close" aria-label="Fechar janela">&times;</button>
+        </div>
+        <form id="generate-analysis-form">
+          <div class="modal-body">
+            <div class="analysis-period-fields">
+              <div class="form-group">
+                <label for="analysis-period-start" class="form-label">Data inicial</label>
+                <input type="date" id="analysis-period-start" class="form-input" required>
+              </div>
+              <div class="form-group">
+                <label for="analysis-period-end" class="form-label">Data final</label>
+                <input type="date" id="analysis-period-end" class="form-input" required>
+              </div>
+            </div>
+            <div class="analysis-generation-note">
+              <strong>O que será calculado</strong>
+              <p>Receitas, despesas, saldo do período, comprometimento, perfil financeiro e indicadores por categoria.</p>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline" data-close-modal="true">Cancelar</button>
+            <button type="submit" class="btn btn-primary">Gerar análise</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
     <!-- Modal 2: Cadastro de Nova Conta -->
     <div id="modal-new-account" class="modal-overlay">
       <div class="modal-container">
@@ -1193,18 +1282,29 @@
             </div>
 
             <div class="form-group">
-              <label for="acc-balance-input" class="form-label">Saldo Inicial (R$)</label>
-              <input type="number" step="0.01" id="acc-balance-input" class="form-input" value="0.00" required>
+              <label for="acc-balance-input" id="account-balance-label" class="form-label">Saldo inicial da conta (R$)</label>
+              <input type="text" inputmode="decimal" id="acc-balance-input" class="form-input" value="0,00" placeholder="0,00" required>
+              <p id="account-balance-helper" class="form-helper">Informe quanto existe na conta no momento do cadastro.</p>
+            </div>
+
+            <div id="account-balance-income-option" class="account-balance-income-option">
+              <label for="acc-balance-as-income">
+                <input type="checkbox" id="acc-balance-as-income">
+                <span>
+                  <strong>Adicionar esse saldo como receita</strong>
+                  <small>Marque somente se esse dinheiro foi recebido no período, como salário ou pagamento. O sistema criará a receita uma única vez e não duplicará o saldo. Desmarcado, o valor será tratado apenas como saldo inicial.</small>
+                </span>
+              </label>
             </div>
 
             <div class="form-group">
               <label for="acc-limit-input" class="form-label">Limite de Crédito (R$)</label>
-              <input type="number" step="0.01" id="acc-limit-input" class="form-input" value="0.00">
+              <input type="text" inputmode="decimal" id="acc-limit-input" class="form-input" value="0,00" placeholder="0,00">
             </div>
 
             <div class="form-group">
               <label for="acc-overdraft-input" class="form-label">Limite de Cheque Especial (R$)</label>
-              <input type="number" step="0.01" id="acc-overdraft-input" class="form-input" value="0.00">
+              <input type="text" inputmode="decimal" id="acc-overdraft-input" class="form-input" value="0,00" placeholder="0,00">
             </div>
           </div>
           <div class="modal-footer">
@@ -1341,7 +1441,7 @@
   <button type="button" id="floating-ai-button" class="floating-ai-button is-hidden" data-open-modal="modal-fin-assistant"
     onclick="window.openFinAssistant?.()"
     aria-label="Abrir Fin, assistente de IA"><span>IA</span><strong>Fin</strong></button>
-  <script src="js/app.js?v=fin-assistant-6"></script>
+  <script src="js/app.js?v=balance-income-fix-1"></script>
   <script>
     function switchRegTab(tabId, activeButton) {
       document.querySelectorAll('.reg-tab-content').forEach(el => el.style.display = 'none');
