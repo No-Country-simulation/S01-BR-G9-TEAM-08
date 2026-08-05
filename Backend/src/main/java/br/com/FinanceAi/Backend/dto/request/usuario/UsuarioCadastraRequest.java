@@ -6,7 +6,7 @@ import jakarta.validation.constraints.Size;
 
 public record UsuarioCadastraRequest(
         @NotBlank
-        @Size(min = 6, max = 100, message = "Nome deve ter entre 2 e 100 caracteres")
+        @Size(min = 2, max = 100, message = "Nome deve ter entre 2 e 100 caracteres")
         String nome,
 
         @NotBlank
