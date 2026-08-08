@@ -1,5 +1,6 @@
 package br.com.FinanceAi.Backend.service;
 
+import br.com.FinanceAi.Backend.config.UsuarioAutenticado;
 import br.com.FinanceAi.Backend.entity.Usuario;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -19,8 +20,8 @@ public class TokenServiceTest {
         ReflectionTestUtils.setField(tokenService, "expirationHours", 2L);
     }
 
-    private Usuario criarUsuarioTeste() {
-        return Usuario.builder()
+    private UsuarioAutenticado criarUsuarioTeste() {
+        return UsuarioAutenticado.builder()
                 .nome("test")
                 .email("test@email.com")
                 .senha("12345678")
@@ -31,8 +32,8 @@ public class TokenServiceTest {
     @DisplayName("Deve gerar um token válido e não nulo")
     void deveGerarTokenValido() {
 
-        Usuario usuario = criarUsuarioTeste();
-        String token = tokenService.generateToken(usuario);
+        UsuarioAutenticado usuarioAutenticado = criarUsuarioTeste();
+        String token = tokenService.generateToken(usuarioAutenticado);
 
         assertThat(token).isNotBlank();
         assertThat(token.split("\\.")).hasSize(3);
@@ -42,11 +43,11 @@ public class TokenServiceTest {
     @DisplayName("Token gerado deve validar de volta com o subject correto")
     void tokenGeradoDeveSerValidoNoRoundTrip() {
 
-        Usuario usuario = criarUsuarioTeste();
-        String token = tokenService.generateToken(usuario);
+        UsuarioAutenticado usuarioAutenticado = criarUsuarioTeste();
+        String token = tokenService.generateToken(usuarioAutenticado);
         String subject = tokenService.validateToken(token);
 
-        assertThat(subject).isEqualTo(usuario.getUsername());
+        assertThat(subject).isEqualTo(usuarioAutenticado.getUsername());
     }
 
     @Test
@@ -62,8 +63,8 @@ public class TokenServiceTest {
     void deveRetornarVazioParaTokenExpirado() {
 
         ReflectionTestUtils.setField(tokenService, "expirationHours", 0L);
-        Usuario usuario = criarUsuarioTeste();
-        String token = tokenService.generateToken(usuario);
+        UsuarioAutenticado usuarioAutenticado = criarUsuarioTeste();
+        String token = tokenService.generateToken(usuarioAutenticado);
 
         try {
             Thread.sleep(50);
