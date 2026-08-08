@@ -1,12 +1,11 @@
 package br.com.FinanceAi.Backend.controller;
 
-import br.com.FinanceAi.Backend.config.UsuarioAutenticado;
+import br.com.FinanceAi.Backend.security.UsuarioAutenticado;
 import br.com.FinanceAi.Backend.dto.request.usuario.UsuarioAlteraSenhaRequest;
 import br.com.FinanceAi.Backend.dto.request.usuario.UsuarioAtualizaRequest;
 import br.com.FinanceAi.Backend.dto.request.usuario.UsuarioExcluiRequest;
 import br.com.FinanceAi.Backend.dto.response.usuario.UsuarioAtualizaResponse;
 import br.com.FinanceAi.Backend.dto.response.usuario.UsuarioResponse;
-import br.com.FinanceAi.Backend.mapper.UsuarioMapper;
 import br.com.FinanceAi.Backend.service.UsuarioService;
 
 import jakarta.validation.Valid;

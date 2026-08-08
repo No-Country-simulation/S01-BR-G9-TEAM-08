@@ -1,6 +1,6 @@
 package br.com.FinanceAi.Backend.service;
 
-import br.com.FinanceAi.Backend.config.UsuarioAutenticado;
+import br.com.FinanceAi.Backend.security.UsuarioAutenticado;
 import br.com.FinanceAi.Backend.entity.Usuario;
 import br.com.FinanceAi.Backend.repository.UsuarioRepository;
 import org.springframework.security.core.userdetails.UserDetails;

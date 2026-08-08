@@ -1,4 +1,4 @@
-package br.com.FinanceAi.Backend.config;
+package br.com.FinanceAi.Backend.security;
 
 import br.com.FinanceAi.Backend.repository.UsuarioRepository;
 import br.com.FinanceAi.Backend.service.TokenService;

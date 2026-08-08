@@ -1,4 +1,4 @@
-package br.com.FinanceAi.Backend.config;
+package br.com.FinanceAi.Backend.security;
 
 import br.com.FinanceAi.Backend.dto.response.ErrorResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;

@@ -1,6 +1,6 @@
 package br.com.FinanceAi.Backend.controller;
 
-import br.com.FinanceAi.Backend.config.UsuarioAutenticado;
+import br.com.FinanceAi.Backend.security.UsuarioAutenticado;
 import br.com.FinanceAi.Backend.dto.request.LoginRequest;
 import br.com.FinanceAi.Backend.dto.request.usuario.UsuarioCadastraRequest;
 import br.com.FinanceAi.Backend.dto.response.LoginResponse;

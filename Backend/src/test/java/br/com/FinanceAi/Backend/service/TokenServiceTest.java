@@ -1,7 +1,6 @@
 package br.com.FinanceAi.Backend.service;
 
-import br.com.FinanceAi.Backend.config.UsuarioAutenticado;
-import br.com.FinanceAi.Backend.entity.Usuario;
+import br.com.FinanceAi.Backend.security.UsuarioAutenticado;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
