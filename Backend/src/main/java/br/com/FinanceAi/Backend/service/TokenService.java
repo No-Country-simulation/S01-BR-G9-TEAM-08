@@ -1,5 +1,6 @@
 package br.com.FinanceAi.Backend.service;
 
+import br.com.FinanceAi.Backend.config.UsuarioAutenticado;
 import br.com.FinanceAi.Backend.entity.Usuario;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
@@ -21,12 +22,12 @@ public class TokenService {
     @Value("${JWT_EXPIRATION_HOURS:2}")
     private long expirationHours;
 
-    public String generateToken(Usuario usuario) {
+    public String generateToken(UsuarioAutenticado usuarioAutenticado) {
         try {
             Algorithm algorithm = Algorithm.HMAC256(secret);
             return JWT.create()
                     .withIssuer("auth-api")
-                    .withSubject(usuario.getUsername())
+                    .withSubject(usuarioAutenticado.getUsername())
                     .withExpiresAt(genExpirationDate())
                     .sign(algorithm);
         } catch (JWTCreationException exception) {
