@@ -1,10 +1,10 @@
 package br.com.FinanceAi.Backend.controller;
 
+import br.com.FinanceAi.Backend.config.UsuarioAutenticado;
 import br.com.FinanceAi.Backend.dto.request.LoginRequest;
 import br.com.FinanceAi.Backend.dto.request.usuario.UsuarioCadastraRequest;
 import br.com.FinanceAi.Backend.dto.response.LoginResponse;
 import br.com.FinanceAi.Backend.dto.response.usuario.UsuarioCadastraResponse;
-import br.com.FinanceAi.Backend.entity.Usuario;
 import br.com.FinanceAi.Backend.service.TokenService;
 import br.com.FinanceAi.Backend.service.UsuarioService;
 import jakarta.validation.Valid;
@@ -60,7 +60,7 @@ public class AuthController {
         UsernamePasswordAuthenticationToken emailSenha = new UsernamePasswordAuthenticationToken(request.email(), request.senha());
 
         var auth = this.authenticationManager.authenticate(emailSenha);
-        var token = tokenService.generateToken((Usuario) auth.getPrincipal());
+        var token = tokenService.generateToken((UsuarioAutenticado) auth.getPrincipal());
 
         return ResponseEntity.ok(new LoginResponse(token, TOKEN_TYPE, EXPIRA_TOKEN));
     }
