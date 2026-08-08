@@ -25,8 +25,8 @@ import java.time.Duration;
 public class AuthController {
 
     private final TokenService tokenService;
-    private UsuarioService usuarioService;
-    private AuthenticationManager authenticationManager;
+    private final UsuarioService usuarioService;
+    private final AuthenticationManager authenticationManager;
 
     public static final String TOKEN_TYPE = "Bearer";
     public static final long EXPIRA_TOKEN = Duration.ofHours(2).getSeconds(); // 7200

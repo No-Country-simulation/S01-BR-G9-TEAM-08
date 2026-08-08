@@ -1,7 +1,6 @@
 package br.com.FinanceAi.Backend.service;
 
 import br.com.FinanceAi.Backend.config.UsuarioAutenticado;
-import br.com.FinanceAi.Backend.entity.Usuario;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTCreationException;

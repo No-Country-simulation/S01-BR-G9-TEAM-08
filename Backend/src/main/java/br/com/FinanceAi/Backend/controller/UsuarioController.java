@@ -21,7 +21,6 @@ import org.springframework.web.bind.annotation.*;
 public class UsuarioController {
 
     private final UsuarioService usuarioService;
-    private final UsuarioMapper usuarioMapper;
 
     @GetMapping("/me")
     public ResponseEntity<UsuarioResponse> obterPerfil(@AuthenticationPrincipal UsuarioAutenticado usuarioAutenticado) {
