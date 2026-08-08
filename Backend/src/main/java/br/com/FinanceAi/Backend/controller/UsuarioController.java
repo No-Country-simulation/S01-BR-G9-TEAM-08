@@ -1,11 +1,11 @@
 package br.com.FinanceAi.Backend.controller;
 
+import br.com.FinanceAi.Backend.config.UsuarioAutenticado;
 import br.com.FinanceAi.Backend.dto.request.usuario.UsuarioAlteraSenhaRequest;
 import br.com.FinanceAi.Backend.dto.request.usuario.UsuarioAtualizaRequest;
 import br.com.FinanceAi.Backend.dto.request.usuario.UsuarioExcluiRequest;
 import br.com.FinanceAi.Backend.dto.response.usuario.UsuarioAtualizaResponse;
 import br.com.FinanceAi.Backend.dto.response.usuario.UsuarioResponse;
-import br.com.FinanceAi.Backend.entity.Usuario;
 import br.com.FinanceAi.Backend.mapper.UsuarioMapper;
 import br.com.FinanceAi.Backend.service.UsuarioService;
 
@@ -24,14 +24,14 @@ public class UsuarioController {
     private final UsuarioMapper usuarioMapper;
 
     @GetMapping("/me")
-    public ResponseEntity<UsuarioResponse> obterPerfil(@AuthenticationPrincipal Usuario usuarioAutenticado) {
+    public ResponseEntity<UsuarioResponse> obterPerfil(@AuthenticationPrincipal UsuarioAutenticado usuarioAutenticado) {
         UsuarioResponse response = usuarioService.buscarPerfil(usuarioAutenticado.getId());
-       return ResponseEntity.ok(usuarioMapper.toUsuarioResponse(usuarioAutenticado));
+        return ResponseEntity.ok(response);
     }
 
     @PutMapping("/me")
     public ResponseEntity<UsuarioAtualizaResponse> atualizarPerfil(
-            @AuthenticationPrincipal Usuario usuarioAutenticado,
+            @AuthenticationPrincipal UsuarioAutenticado usuarioAutenticado,
             @RequestBody @Valid UsuarioAtualizaRequest request
     ) {
         UsuarioAtualizaResponse response = usuarioService.atualizaPerfil(usuarioAutenticado.getId(), request);
@@ -40,7 +40,7 @@ public class UsuarioController {
 
     @PatchMapping("/me/senha")
     public ResponseEntity<Void> alterarSenha(
-            @AuthenticationPrincipal Usuario usuarioAutenticado,
+            @AuthenticationPrincipal UsuarioAutenticado usuarioAutenticado,
             @RequestBody @Valid UsuarioAlteraSenhaRequest request
     ) {
         usuarioService.alteraSenha(usuarioAutenticado.getId(), request);
@@ -49,7 +49,7 @@ public class UsuarioController {
 
     @DeleteMapping("/me")
     public ResponseEntity<Void> removerPerfil(
-            @AuthenticationPrincipal Usuario usuarioAutenticado,
+            @AuthenticationPrincipal UsuarioAutenticado usuarioAutenticado,
             @RequestBody @Valid UsuarioExcluiRequest request
     ) {
         usuarioService.excluiUsuario(usuarioAutenticado.getId(), request);
