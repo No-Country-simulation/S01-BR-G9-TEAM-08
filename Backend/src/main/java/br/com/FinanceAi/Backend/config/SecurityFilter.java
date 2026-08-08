@@ -33,16 +33,22 @@ public class SecurityFilter extends OncePerRequestFilter {
                 .map(tokenService::validateToken)
                 .filter(email -> !email.isEmpty())
                 .flatMap(usuarioRepository::findByEmail)
+                .map(usuario -> UsuarioAutenticado.builder()
+                        .id(usuario.getId())
+                        .nome(usuario.getNome())
+                        .email(usuario.getEmail())
+                        .senha(usuario.getSenha())
+                        .build())
                 .ifPresent(this::authenticateUser);
 
         filterChain.doFilter(request, response);
     }
 
-    private void authenticateUser(Usuario usuario) {
+    private void authenticateUser(UsuarioAutenticado usuarioAutenticado) {
         var auth = new UsernamePasswordAuthenticationToken(
-                usuario,
+                usuarioAutenticado,
                 null,
-                usuario.getAuthorities()
+                usuarioAutenticado.getAuthorities()
         );
         SecurityContextHolder.getContext().setAuthentication(auth);
     }
