@@ -1,0 +1,15 @@
+### Teste com texto vazio (deve dar erro 400 de validação)
+POST http://localhost:8080/api/ia/processar-texto
+Content-Type: application/json
+
+{
+  "texto": ""
+}
+
+### Teste com texto válido (deve retornar o JSON mockado)
+POST http://localhost:8080/api/ia/processar-texto
+Content-Type: application/json
+
+{
+  "texto": "gastei 50 reais no mercado"
+}
