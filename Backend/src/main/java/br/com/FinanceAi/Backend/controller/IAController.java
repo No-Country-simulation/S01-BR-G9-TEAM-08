@@ -1,6 +1,7 @@
 package br.com.FinanceAi.Backend.controller;
 
 import br.com.FinanceAi.Backend.dto.request.TextoIARequest;
+import br.com.FinanceAi.Backend.dto.response.ResultadoAnaliseIA;
 import br.com.FinanceAi.Backend.service.IAService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -17,8 +18,15 @@ public class IAController {
     }
 
     @PostMapping("/processar-texto")
-    public ResponseEntity<String> processarTexto(@RequestBody @Valid TextoIARequest request) {
-        String resposta = iaService.processarTextoUsuario(request.getTexto());
-        return ResponseEntity.ok(resposta);
+    public ResponseEntity<ResultadoAnaliseIA> processarTexto(
+            @RequestBody @Valid TextoIARequest request
+    ) {
+
+        ResultadoAnaliseIA resultado =
+                iaService.processarEInterpretarTexto(
+                        request.getTexto()
+                );
+
+        return ResponseEntity.ok(resultado);
     }
 }
