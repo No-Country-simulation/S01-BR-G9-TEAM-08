@@ -138,4 +138,29 @@ class ClassificadorCategoriaIATest {
 
         assertEquals("Outros", resultado);
     }
+    @Test
+    void deveAceitarCategoriaValidaMesmoComAspasEMinusculas() {
+
+        when(
+                chatClient.prompt()
+                        .system(anyString())
+                        .user(anyString())
+                        .call()
+                        .content()
+        ).thenReturn("\"alimentação\"");
+
+        List<String> categoriasPermitidas = List.of(
+                "Alimentação",
+                "Transporte",
+                "Saúde",
+                "Outros"
+        );
+
+        String resultado = classificador.classificar(
+                "comprei comida no mercado",
+                categoriasPermitidas
+        );
+
+        assertEquals("Alimentação", resultado);
+    }
 }
