@@ -1,20 +1,24 @@
-package br.com.FinanceAi.Backend.entity;
+package br.com.FinanceAi.Backend.security;
 
 import br.com.FinanceAi.Backend.entity.enums.SituacaoConta;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.OffsetDateTime;
+import java.util.Collection;
+import java.util.List;
 
-@Entity
-@Table(name = "usuarios")
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
 @Builder
-public class Usuario {
+@Setter
+@Getter
+@AllArgsConstructor
+public class UsuarioAutenticado implements UserDetails {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -33,8 +37,25 @@ public class Usuario {
     @Column(nullable = false, updatable = false)
     private OffsetDateTime dataCadastro;
 
-    @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
+    @Builder.Default
     private SituacaoConta situacaoConta = SituacaoConta.ATIVO;
+
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return List.of();
+    }
+
+    @Override
+    public String getPassword() {
+        return senha;
+    }
+
+    @Override
+    public String getUsername() {
+        return email;
+    }
+
 }
