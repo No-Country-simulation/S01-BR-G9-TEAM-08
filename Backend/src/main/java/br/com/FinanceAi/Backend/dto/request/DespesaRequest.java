@@ -19,10 +19,7 @@ public record DespesaRequest(
         BigDecimal valor,
 
         @NotNull(message = "A data é obrigatória")
-        LocalDate data,
-
-        @NotNull(message = "A categoria é obrigatória")
-        Long categoriaId
+        LocalDate data
 
 ) {
 }

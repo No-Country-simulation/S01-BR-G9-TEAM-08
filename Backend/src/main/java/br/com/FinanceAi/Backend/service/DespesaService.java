@@ -18,6 +18,7 @@ public class DespesaService {
 
     private final DespesaRepository despesaRepository;
     private final CategoriaRepository categoriaRepository;
+    private final ClassificadorCategoriaIA classificadorCategoriaIA;
 
     @Transactional
     public Despesa cadastrar(
@@ -25,7 +26,8 @@ public class DespesaService {
             Long usuarioId
     ) {
 
-        Categoria categoria = buscarCategoriaDespesa(request.categoriaId());
+        Categoria categoria =
+                classificarCategoria(request.descricao());
 
         Despesa despesa = Despesa.builder()
                 .descricao(request.descricao())
@@ -95,14 +97,20 @@ public class DespesaService {
 
         Despesa despesa = buscarPorId(id, usuarioId);
 
-        Categoria categoria = buscarCategoriaDespesa(
-                request.categoriaId()
-        );
+        boolean descricaoAlterada =
+                !despesa.getDescricao()
+                        .equalsIgnoreCase(request.descricao());
 
         despesa.setDescricao(request.descricao());
         despesa.setValor(request.valor());
         despesa.setData(request.data());
-        despesa.setCategoria(categoria);
+
+        if (descricaoAlterada) {
+            Categoria novaCategoria =
+                    classificarCategoria(request.descricao());
+
+            despesa.setCategoria(novaCategoria);
+        }
 
         return despesaRepository.save(despesa);
     }
@@ -120,22 +128,45 @@ public class DespesaService {
         despesaRepository.save(despesa);
     }
 
-    private Categoria buscarCategoriaDespesa(Long categoriaId) {
+    private Categoria classificarCategoria(String descricao) {
 
-        Categoria categoria = categoriaRepository
-                .findById(categoriaId)
-                .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "Categoria não encontrada."
-                        )
+        List<Categoria> categorias =
+                categoriaRepository.findByTipo(
+                        Categoria.TipoCategoria.DESPESA
                 );
 
-        if (categoria.getTipo() != Categoria.TipoCategoria.DESPESA) {
-            throw new IllegalArgumentException(
-                    "A categoria informada não é uma categoria de despesa."
+        if (categorias.isEmpty()) {
+            throw new IllegalStateException(
+                    "Nenhuma categoria de despesa cadastrada."
             );
         }
 
-        return categoria;
+        List<String> nomesCategorias = categorias.stream()
+                .map(Categoria::getNome)
+                .toList();
+
+        String nomeClassificado =
+                classificadorCategoriaIA.classificar(
+                        descricao,
+                        nomesCategorias
+                );
+
+        return categorias.stream()
+                .filter(categoria ->
+                        categoria.getNome()
+                                .equalsIgnoreCase(nomeClassificado))
+                .findFirst()
+                .orElseGet(() ->
+                        categorias.stream()
+                                .filter(categoria ->
+                                        categoria.getNome()
+                                                .equalsIgnoreCase("Outros"))
+                                .findFirst()
+                                .orElseThrow(() ->
+                                        new IllegalStateException(
+                                                "Categoria Outros não encontrada."
+                                        )
+                                )
+                );
     }
 }
