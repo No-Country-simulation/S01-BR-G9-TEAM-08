@@ -33,6 +33,7 @@ public class Usuario {
     @Column(nullable = false, updatable = false)
     private OffsetDateTime dataCadastro;
 
+    @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private SituacaoConta situacaoConta = SituacaoConta.ATIVO;
