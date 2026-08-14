@@ -2,6 +2,7 @@ package br.com.FinanceAi.Backend.service;
 
 import br.com.FinanceAi.Backend.dto.response.DashboardResponse;
 import br.com.FinanceAi.Backend.dto.response.GastoPorCategoriaResponse;
+import br.com.FinanceAi.Backend.dto.response.PerfilFinanceiroDashboardResponse;
 import br.com.FinanceAi.Backend.entity.Despesa;
 import br.com.FinanceAi.Backend.entity.Receita;
 import br.com.FinanceAi.Backend.repository.DespesaRepository;
@@ -56,10 +57,15 @@ public class DashboardService {
                         totalDespesas
                 );
 
-        String perfilFinanceiro =
+        PerfilFinanceiroDashboardResponse perfilFinanceiro =
                 perfilFinanceiroRepository
                         .findTopByUsuarioIdOrderByDataClassificacaoDesc(usuarioId)
-                        .map(perfil -> perfil.getTipoPerfil().name())
+                        .map(perfil ->
+                                new PerfilFinanceiroDashboardResponse(
+                                        perfil.getTipoPerfil().name(),
+                                        perfil.getDataClassificacao()
+                                )
+                        )
                         .orElse(null);
 
         return new DashboardResponse(

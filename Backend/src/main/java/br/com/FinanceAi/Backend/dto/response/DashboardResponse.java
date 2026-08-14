@@ -9,6 +9,6 @@ public record DashboardResponse(
         BigDecimal totalDespesas,
         BigDecimal percentualEconomia,
         List<GastoPorCategoriaResponse> gastosPorCategoria,
-        String perfilFinanceiro
+        PerfilFinanceiroDashboardResponse perfilFinanceiro
 ) {
 }
