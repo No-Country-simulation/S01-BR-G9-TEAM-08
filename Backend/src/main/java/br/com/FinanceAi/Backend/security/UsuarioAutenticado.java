@@ -2,10 +2,7 @@ package br.com.FinanceAi.Backend.security;
 
 import br.com.FinanceAi.Backend.entity.enums.SituacaoConta;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -13,10 +10,12 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.time.OffsetDateTime;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 
 @Builder
 @Setter
 @Getter
+@EqualsAndHashCode
 @AllArgsConstructor
 public class UsuarioAutenticado implements UserDetails {
 
