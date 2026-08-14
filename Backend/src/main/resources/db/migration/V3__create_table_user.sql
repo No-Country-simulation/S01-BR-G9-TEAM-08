@@ -5,5 +5,5 @@ CREATE TABLE usuarios (
     email VARCHAR(100) NOT NULL UNIQUE ,
     senha VARCHAR(255) NOT NULL ,
     data_cadastro TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP ,
-    situacao_conta VARCHAR(10) DEFAULT 'ATIVO' CHECK (situacao_conta IN ('ATIVO', 'INATIVO'))
+    situacao_conta VARCHAR(10) NOT NULL DEFAULT 'ATIVO' CHECK (situacao_conta IN ('ATIVO', 'INATIVO'))
 );
