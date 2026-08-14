@@ -1,4 +1,14 @@
 package br.com.FinanceAi.Backend.dto.response;
 
-public record DashboardResponse() {
+import java.math.BigDecimal;
+import java.util.List;
+
+public record DashboardResponse(
+        BigDecimal saldo,
+        BigDecimal totalReceitas,
+        BigDecimal totalDespesas,
+        BigDecimal percentualEconomia,
+        List<GastoPorCategoriaResponse> gastosPorCategoria,
+        String perfilFinanceiro
+) {
 }

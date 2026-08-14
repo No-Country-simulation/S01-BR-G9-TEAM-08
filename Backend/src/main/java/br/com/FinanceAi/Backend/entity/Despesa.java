@@ -40,11 +40,17 @@ public class Despesa {
     @Builder.Default
     private boolean origemIA = false;
 
+    @Column(nullable = false)
+    @Builder.Default
+    private boolean ativo = true;
+
     @Column(name = "criado_em", nullable = false, updatable = false)
     private LocalDateTime criadoEm;
 
     @PrePersist
     protected void aoPersistir() {
-        this.criadoEm = LocalDateTime.now();
+        if (criadoEm == null) {
+            criadoEm = LocalDateTime.now();
+        }
     }
 }

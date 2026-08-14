@@ -6,15 +6,21 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface DespesaRepository extends JpaRepository<Despesa, Long> {
 
-    List<Despesa> findByUsuarioIdOrderByDataDesc(Long usuarioId);
+    List<Despesa> findByUsuarioIdAndAtivoTrueOrderByDataDesc(Long usuarioId);
 
-    List<Despesa> findByUsuarioIdAndDataBetweenOrderByDataDesc(
+    List<Despesa> findByUsuarioIdAndAtivoTrueAndDataBetweenOrderByDataDesc(
             Long usuarioId,
             LocalDate dataInicio,
             LocalDate dataFim
+    );
+
+    Optional<Despesa> findByIdAndUsuarioIdAndAtivoTrue(
+            Long id,
+            Long usuarioId
     );
 }

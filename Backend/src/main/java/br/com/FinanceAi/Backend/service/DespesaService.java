@@ -20,7 +20,10 @@ public class DespesaService {
     private final CategoriaRepository categoriaRepository;
 
     @Transactional
-    public Despesa cadastrar(DespesaRequest request, Long usuarioId) {
+    public Despesa cadastrar(
+            DespesaRequest request,
+            Long usuarioId
+    ) {
 
         Categoria categoria = buscarCategoriaDespesa(request.categoriaId());
 
@@ -31,13 +34,16 @@ public class DespesaService {
                 .categoria(categoria)
                 .usuarioId(usuarioId)
                 .origemIA(false)
+                .ativo(true)
                 .build();
 
         return despesaRepository.save(despesa);
     }
 
     public List<Despesa> listar(Long usuarioId) {
-        return despesaRepository.findByUsuarioIdOrderByDataDesc(usuarioId);
+
+        return despesaRepository
+                .findByUsuarioIdAndAtivoTrueOrderByDataDesc(usuarioId);
     }
 
     public List<Despesa> listarPorPeriodo(
@@ -46,6 +52,12 @@ public class DespesaService {
             LocalDate dataFim
     ) {
 
+        if (dataInicio == null || dataFim == null) {
+            throw new IllegalArgumentException(
+                    "As datas inicial e final são obrigatórias."
+            );
+        }
+
         if (dataInicio.isAfter(dataFim)) {
             throw new IllegalArgumentException(
                     "A data inicial não pode ser posterior à data final."
@@ -53,23 +65,25 @@ public class DespesaService {
         }
 
         return despesaRepository
-                .findByUsuarioIdAndDataBetweenOrderByDataDesc(
+                .findByUsuarioIdAndAtivoTrueAndDataBetweenOrderByDataDesc(
                         usuarioId,
                         dataInicio,
                         dataFim
                 );
     }
 
-    public Despesa buscarPorId(Long id, Long usuarioId) {
+    public Despesa buscarPorId(
+            Long id,
+            Long usuarioId
+    ) {
 
-        Despesa despesa = despesaRepository.findById(id)
+        return despesaRepository
+                .findByIdAndUsuarioIdAndAtivoTrue(id, usuarioId)
                 .orElseThrow(() ->
-                        new IllegalArgumentException("Despesa não encontrada.")
+                        new IllegalArgumentException(
+                                "Despesa não encontrada."
+                        )
                 );
-
-        validarProprietario(despesa, usuarioId);
-
-        return despesa;
     }
 
     @Transactional
@@ -81,7 +95,9 @@ public class DespesaService {
 
         Despesa despesa = buscarPorId(id, usuarioId);
 
-        Categoria categoria = buscarCategoriaDespesa(request.categoriaId());
+        Categoria categoria = buscarCategoriaDespesa(
+                request.categoriaId()
+        );
 
         despesa.setDescricao(request.descricao());
         despesa.setValor(request.valor());
@@ -92,18 +108,26 @@ public class DespesaService {
     }
 
     @Transactional
-    public void excluir(Long id, Long usuarioId) {
+    public void excluir(
+            Long id,
+            Long usuarioId
+    ) {
 
         Despesa despesa = buscarPorId(id, usuarioId);
 
-        despesaRepository.delete(despesa);
+        despesa.setAtivo(false);
+
+        despesaRepository.save(despesa);
     }
 
     private Categoria buscarCategoriaDespesa(Long categoriaId) {
 
-        Categoria categoria = categoriaRepository.findById(categoriaId)
+        Categoria categoria = categoriaRepository
+                .findById(categoriaId)
                 .orElseThrow(() ->
-                        new IllegalArgumentException("Categoria não encontrada.")
+                        new IllegalArgumentException(
+                                "Categoria não encontrada."
+                        )
                 );
 
         if (categoria.getTipo() != Categoria.TipoCategoria.DESPESA) {
@@ -113,17 +137,5 @@ public class DespesaService {
         }
 
         return categoria;
-    }
-
-    private void validarProprietario(
-            Despesa despesa,
-            Long usuarioId
-    ) {
-
-        if (!despesa.getUsuarioId().equals(usuarioId)) {
-            throw new IllegalArgumentException(
-                    "A despesa não pertence ao usuário autenticado."
-            );
-        }
     }
 }
