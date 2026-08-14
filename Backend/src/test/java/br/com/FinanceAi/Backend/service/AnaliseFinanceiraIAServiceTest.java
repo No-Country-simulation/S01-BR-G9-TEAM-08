@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.chat.client.ChatClient;
+import br.com.FinanceAi.Backend.exception.IaIndisponivelException;
 
 import java.math.BigDecimal;
 
@@ -171,9 +172,9 @@ class AnaliseFinanceiraIAServiceTest {
         IndicadoresFinanceiros indicadores =
                 criarIndicadores();
 
-        IllegalStateException exception =
+        IaIndisponivelException exception =
                 assertThrows(
-                        IllegalStateException.class,
+                        IaIndisponivelException.class,
                         () -> analiseService.analisar(
                                 indicadores
                         )
@@ -200,7 +201,7 @@ class AnaliseFinanceiraIAServiceTest {
                 criarIndicadores();
 
         assertThrows(
-                IllegalStateException.class,
+                IaIndisponivelException.class,
                 () -> analiseService.analisar(
                         indicadores
                 )

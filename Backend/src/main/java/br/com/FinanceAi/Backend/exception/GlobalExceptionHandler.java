@@ -86,4 +86,17 @@ public class GlobalExceptionHandler {
                 HttpStatus.BAD_REQUEST
         ));
     }
+    @ExceptionHandler(IaIndisponivelException.class)
+    public ResponseEntity<ErrorResponse> handleIaIndisponivel(
+            IaIndisponivelException ex
+    ) {
+
+        return ResponseEntity
+                .status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body(new ErrorResponse(
+                        "IA_INDISPONIVEL",
+                        ex.getMessage(),
+                        HttpStatus.SERVICE_UNAVAILABLE
+                ));
+    }
 }

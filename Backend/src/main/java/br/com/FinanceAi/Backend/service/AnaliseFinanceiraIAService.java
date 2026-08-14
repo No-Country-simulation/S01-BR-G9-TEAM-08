@@ -2,6 +2,7 @@ package br.com.FinanceAi.Backend.service;
 
 import br.com.FinanceAi.Backend.dto.response.IndicadoresFinanceiros;
 import br.com.FinanceAi.Backend.dto.response.ResultadoAnaliseFinanceiraIA;
+import br.com.FinanceAi.Backend.exception.IaIndisponivelException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.stereotype.Service;
@@ -79,7 +80,8 @@ public class AnaliseFinanceiraIAService {
                 );
             }
 
-            String respostaLimpa = limparRespostaJson(respostaIa);
+            String respostaLimpa =
+                    limparRespostaJson(respostaIa);
 
             return objectMapper.readValue(
                     respostaLimpa,
@@ -88,7 +90,7 @@ public class AnaliseFinanceiraIAService {
 
         } catch (Exception e) {
 
-            throw new IllegalStateException(
+            throw new IaIndisponivelException(
                     "Não foi possível concluir a análise financeira com IA.",
                     e
             );
