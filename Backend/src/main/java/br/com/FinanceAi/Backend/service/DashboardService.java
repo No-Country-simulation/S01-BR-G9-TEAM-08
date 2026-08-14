@@ -5,6 +5,7 @@ import br.com.FinanceAi.Backend.dto.response.GastoPorCategoriaResponse;
 import br.com.FinanceAi.Backend.entity.Despesa;
 import br.com.FinanceAi.Backend.entity.Receita;
 import br.com.FinanceAi.Backend.repository.DespesaRepository;
+import br.com.FinanceAi.Backend.repository.PerfilFinanceiroRepository;
 import br.com.FinanceAi.Backend.repository.ReceitaRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -22,6 +23,7 @@ public class DashboardService {
 
     private final ReceitaRepository receitaRepository;
     private final DespesaRepository despesaRepository;
+    private final PerfilFinanceiroRepository perfilFinanceiroRepository;
 
     @Transactional(readOnly = true)
     public DashboardResponse gerarDashboard(Long usuarioId) {
@@ -54,13 +56,19 @@ public class DashboardService {
                         totalDespesas
                 );
 
+        String perfilFinanceiro =
+                perfilFinanceiroRepository
+                        .findTopByUsuarioIdOrderByDataClassificacaoDesc(usuarioId)
+                        .map(perfil -> perfil.getTipoPerfil().name())
+                        .orElse(null);
+
         return new DashboardResponse(
                 dinheiro(saldo),
                 dinheiro(totalReceitas),
                 dinheiro(totalDespesas),
                 percentualEconomia,
                 gastosPorCategoria,
-                null
+                perfilFinanceiro
         );
     }
 
