@@ -3,6 +3,7 @@ package br.com.FinanceAi.Backend.service;
 import br.com.FinanceAi.Backend.dto.request.DespesaRequest;
 import br.com.FinanceAi.Backend.entity.Categoria;
 import br.com.FinanceAi.Backend.entity.Despesa;
+import br.com.FinanceAi.Backend.exception.ResourceNotFoundException;
 import br.com.FinanceAi.Backend.repository.CategoriaRepository;
 import br.com.FinanceAi.Backend.repository.DespesaRepository;
 import lombok.RequiredArgsConstructor;
@@ -82,7 +83,7 @@ public class DespesaService {
         return despesaRepository
                 .findByIdAndUsuarioIdAndAtivoTrue(id, usuarioId)
                 .orElseThrow(() ->
-                        new IllegalArgumentException(
+                        new ResourceNotFoundException(
                                 "Despesa não encontrada."
                         )
                 );
@@ -106,6 +107,7 @@ public class DespesaService {
         despesa.setData(request.data());
 
         if (descricaoAlterada) {
+
             Categoria novaCategoria =
                     classificarCategoria(request.descricao());
 

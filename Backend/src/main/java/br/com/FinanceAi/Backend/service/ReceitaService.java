@@ -6,6 +6,7 @@ import br.com.FinanceAi.Backend.repository.ReceitaRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import br.com.FinanceAi.Backend.exception.ResourceNotFoundException;
 
 import java.util.List;
 
@@ -46,7 +47,7 @@ public class ReceitaService {
         return receitaRepository
                 .findByIdAndUsuarioIdAndAtivoTrue(id, usuarioId)
                 .orElseThrow(() ->
-                        new IllegalArgumentException(
+                        new ResourceNotFoundException(
                                 "Receita não encontrada."
                         )
                 );
