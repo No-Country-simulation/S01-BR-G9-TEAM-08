@@ -86,4 +86,22 @@ public class GlobalExceptionHandler {
                 HttpStatus.BAD_REQUEST
         ));
     }
+
+    @ExceptionHandler(ContaNaoEncontradaException.class)
+    public ResponseEntity<ErrorResponse> handleContaNaoEncontrada(ContaNaoEncontradaException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse(
+                "Conta inexistente",
+                ex.getMessage(),
+                HttpStatus.NOT_FOUND
+        ));
+    }
+
+    @ExceptionHandler(DividaNaoEncontradaException.class)
+    public ResponseEntity<ErrorResponse> handleDividaNaoEncontrada(DividaNaoEncontradaException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse(
+                "Dívida inexistente",
+                ex.getMessage(),
+                HttpStatus.NOT_FOUND
+        ));
+    }
 }
