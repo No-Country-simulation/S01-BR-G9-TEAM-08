@@ -20,26 +20,9 @@ public class ContaService {
 
     private final ContaRepository contaRepository;
 
-    @Transactional(readOnly = true)
+    @Transactional
     public List<ContaResponse> listarContas(Long usuarioId) {
         List<Conta> contas = contaRepository.findByUsuarioIdOrderByNomeAsc(usuarioId);
-        
-        // Se o usuário ainda não tiver nenhuma conta criada, provisiona a conta padrão
-        if (contas.isEmpty()) {
-            Conta contaPadrao = Conta.builder()
-                    .nome("Carteira Principal")
-                    .instituicao("Carteira")
-                    .tipo("conta corrente")
-                    .moeda("BRL")
-                    .saldo(BigDecimal.ZERO)
-                    .limiteCredito(BigDecimal.ZERO)
-                    .limiteChequeEspecial(BigDecimal.ZERO)
-                    .status("Ativa")
-                    .usuarioId(usuarioId)
-                    .build();
-            contaPadrao = contaRepository.save(contaPadrao);
-            contas = List.of(contaPadrao);
-        }
 
         return contas.stream()
                 .map(ContaResponse::fromEntity)
