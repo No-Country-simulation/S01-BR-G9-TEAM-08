@@ -11,6 +11,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import br.com.FinanceAi.Backend.dto.request.LancamentoComprasRequest;
+import br.com.FinanceAi.Backend.dto.response.DespesaResponse;
+import br.com.FinanceAi.Backend.entity.Despesa;
 
 import java.util.List;
 
@@ -97,5 +100,20 @@ public class ItemCompraController {
         );
 
         return ResponseEntity.noContent().build();
+    }
+    @PostMapping("/lancar-pagos")
+    public ResponseEntity<DespesaResponse> lancarItensPagos(
+            @AuthenticationPrincipal UsuarioAutenticado usuarioAutenticado,
+            @RequestBody @Valid LancamentoComprasRequest request
+    ) {
+
+        Despesa despesa = itemCompraService.lancarItensPagos(
+                request,
+                usuarioAutenticado.getId()
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(DespesaResponse.fromEntity(despesa));
     }
 }

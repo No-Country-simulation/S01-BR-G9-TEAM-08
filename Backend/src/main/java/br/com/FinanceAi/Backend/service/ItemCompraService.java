@@ -1,13 +1,19 @@
 package br.com.FinanceAi.Backend.service;
 
 import br.com.FinanceAi.Backend.dto.request.ItemCompraRequest;
+import br.com.FinanceAi.Backend.dto.request.LancamentoComprasRequest;
+import br.com.FinanceAi.Backend.entity.Categoria;
+import br.com.FinanceAi.Backend.entity.Despesa;
 import br.com.FinanceAi.Backend.entity.ItemCompra;
 import br.com.FinanceAi.Backend.exception.ResourceNotFoundException;
+import br.com.FinanceAi.Backend.repository.CategoriaRepository;
+import br.com.FinanceAi.Backend.repository.DespesaRepository;
 import br.com.FinanceAi.Backend.repository.ItemCompraRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Service
@@ -15,6 +21,8 @@ import java.util.List;
 public class ItemCompraService {
 
     private final ItemCompraRepository itemCompraRepository;
+    private final DespesaRepository despesaRepository;
+    private final CategoriaRepository categoriaRepository;
 
     @Transactional
     public ItemCompra cadastrar(
@@ -96,5 +104,79 @@ public class ItemCompraService {
         item.setAtivo(false);
 
         itemCompraRepository.save(item);
+    }
+
+    @Transactional
+    public Despesa lancarItensPagos(
+            LancamentoComprasRequest request,
+            Long usuarioId
+    ) {
+
+        List<ItemCompra> itens =
+                itemCompraRepository
+                        .findByUsuarioIdAndAtivoTrueAndCompradoTrueAndNaoComprarNovamenteFalse(
+                                usuarioId
+                        );
+
+        if (itens.isEmpty()) {
+            throw new IllegalArgumentException(
+                    "Nenhum item comprado disponível para lançamento."
+            );
+        }
+
+        BigDecimal total = itens.stream()
+                .map(item -> {
+
+                    BigDecimal valorUnitario =
+                            item.getPrecoPago().compareTo(BigDecimal.ZERO) > 0
+                                    ? item.getPrecoPago()
+                                    : item.getPrecoEstimado();
+
+                    return valorUnitario.multiply(
+                            BigDecimal.valueOf(item.getQuantidade())
+                    );
+                })
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        if (total.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException(
+                    "O valor total da compra deve ser maior que zero."
+            );
+        }
+
+        Categoria categoria = categoriaRepository
+                .findByTipo(Categoria.TipoCategoria.DESPESA)
+                .stream()
+                .filter(item ->
+                        item.getNome()
+                                .equalsIgnoreCase(request.categoria())
+                )
+                .findFirst()
+                .orElseThrow(
+                        () -> new ResourceNotFoundException(
+                                "Categoria de despesa não encontrada."
+                        )
+                );
+
+        Despesa despesa = Despesa.builder()
+                .descricao("Compras de Mercado (Lista de Compras)")
+                .valor(total)
+                .data(request.data())
+                .categoria(categoria)
+                .usuarioId(usuarioId)
+                .origemIA(false)
+                .ativo(true)
+                .build();
+
+        Despesa despesaSalva =
+                despesaRepository.save(despesa);
+
+        itens.forEach(item ->
+                item.setAtivo(false)
+        );
+
+        itemCompraRepository.saveAll(itens);
+
+        return despesaSalva;
     }
 }
