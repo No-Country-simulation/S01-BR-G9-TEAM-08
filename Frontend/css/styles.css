@@ -1839,16 +1839,103 @@ button {
 /* Diário Financeiro — entrada, compras e linha do tempo */
 .diary-top-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.05fr) minmax(360px, 0.95fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1.5rem;
-  align-items: start;
 }
 
 .diary-entry-card,
-.diary-shopping-card,
 .diary-no-buy-card,
-.diary-timeline-card {
+.diary-timeline-card,
+.diary-planning-card {
   margin-bottom: 0;
+}
+
+.diary-value-fields {
+  margin-bottom: 1.2rem;
+}
+
+.diary-value-helper {
+  margin-top: 0.4rem;
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.form-helper {
+  margin: 0.4rem 0 1rem;
+}
+
+.diary-planning-container {
+  display: grid;
+  gap: 1rem;
+}
+
+.diary-empty-message {
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+}
+
+.planning-card {
+  padding: 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-card-bg);
+}
+
+.planning-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-bottom: 0.7rem;
+}
+
+.planning-card-title {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--color-text-main);
+  margin-top: 0.35rem;
+}
+
+.planning-values {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.75rem;
+  margin-bottom: 0.45rem;
+  font-size: 0.85rem;
+}
+
+.planning-current {
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--color-text-main);
+}
+
+.planning-target {
+  color: var(--color-text-muted);
+}
+
+.planning-progress {
+  --category-color: var(--color-primary);
+  --category-track: #CCFBF1;
+  height: 8px;
+}
+
+.planning-progress-done {
+  --category-color: var(--color-positive);
+}
+
+.planning-add-form {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.5rem;
+  margin-top: 0.7rem;
+}
+
+.planning-add-form .planning-add-input {
+  min-height: 36px;
+  font-size: 0.85rem;
 }
 
 .diary-card-subtitle {
@@ -1891,69 +1978,6 @@ button {
   box-shadow: 0 3px 9px rgba(15, 118, 110, 0.2);
 }
 
-.diary-side-column {
-  display: grid;
-  gap: 1.5rem;
-}
-
-.diary-shopping-card {
-  background: #FFFFFF;
-}
-
-.diary-shopping-summary {
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 0.9rem;
-  color: var(--color-text-muted);
-  font-size: 0.82rem;
-}
-
-.diary-shopping-summary strong {
-  display: block;
-  margin-top: 0.2rem;
-  color: var(--color-text-main);
-  font-size: 1rem;
-}
-
-.diary-shopping-items {
-  display: grid;
-  gap: 0.45rem;
-}
-
-.diary-shopping-row {
-  display: grid;
-  grid-template-columns: 22px 1fr auto;
-  align-items: center;
-  gap: 0.55rem;
-  min-height: 36px;
-  padding: 0.45rem 0.6rem;
-  border-radius: 8px;
-  background: var(--color-bg-main);
-  color: var(--color-text-main);
-  font-size: 0.85rem;
-}
-
-.diary-shopping-row.is-purchased {
-  background: var(--color-positive-bg);
-}
-
-.diary-shopping-row strong {
-  font-size: 0.8rem;
-}
-
-.diary-shopping-check {
-  display: grid;
-  width: 20px;
-  height: 20px;
-  place-items: center;
-  border-radius: 50%;
-  background: #FFFFFF;
-  color: var(--color-primary);
-  font-weight: 700;
-}
-
-.diary-empty-message,
 .diary-no-buy-preview span {
   color: var(--color-text-muted);
   font-size: 0.85rem;
@@ -1962,6 +1986,7 @@ button {
 .diary-no-buy-card {
   background: #FFFBEB;
   border-color: #FDE68A;
+  margin-top: 1.5rem;
 }
 
 .diary-no-buy-preview {
@@ -2341,8 +2366,13 @@ button {
   border-color: #4a3800;
 }
 
-.theme-dark .diary-shopping-card {
-  background-color: var(--color-card-bg);
+.theme-dark .planning-card {
+  background: #242838;
+  border-color: var(--color-border);
+}
+
+.theme-dark .planning-progress {
+  --category-track: #333a55;
 }
 
 /* Tabela no tema escuro */
@@ -2423,15 +2453,6 @@ button {
 .theme-dark .timeline-content {
   background-color: var(--color-card-bg);
   border-color: var(--color-border);
-}
-
-/* Shopping row */
-.theme-dark .diary-shopping-row {
-  background: #242838;
-}
-
-.theme-dark .diary-shopping-check {
-  background: #333a55;
 }
 
 /* Btn-outline no tema escuro */
@@ -2764,8 +2785,9 @@ body.profile-form-open::before { content:none !important; display:none !importan
   animation: fadeSlideIn 0.35s ease both 0.06s;
 }
 #view-diario.active .diary-entry-card { animation: fadeSlideIn 0.35s ease both 0.06s; }
-#view-diario.active .diary-side-column { animation: fadeSlideIn 0.35s ease both 0.14s; }
 #view-diario.active .diary-timeline-card { animation: fadeSlideIn 0.38s ease both 0.22s; }
+#view-diario.active .diary-planning-card { animation: fadeSlideIn 0.38s ease both 0.18s; }
+#view-diario.active .planning-card:nth-child(1) { animation: fadeSlideIn 0.3s ease both 0.26s; }
 #view-diario.active .timeline-item:nth-child(1) { animation: fadeSlideIn 0.3s ease both 0.24s; }
 #view-diario.active .timeline-item:nth-child(2) { animation: fadeSlideIn 0.3s ease both 0.30s; }
 #view-diario.active .timeline-item:nth-child(3) { animation: fadeSlideIn 0.3s ease both 0.36s; }
@@ -2773,6 +2795,7 @@ body.profile-form-open::before { content:none !important; display:none !importan
 /* ── Lista de Compras ── */
 #view-lista-compras.active .card:nth-child(1) { animation: fadeSlideIn 0.35s ease both 0.06s; }
 #view-lista-compras.active .card:nth-child(2) { animation: fadeSlideIn 0.35s ease both 0.12s; }
+#view-lista-compras.active .diary-no-buy-card { animation: fadeSlideIn 0.38s ease both 0.18s; }
 #view-lista-compras.active .shopping-item-card:nth-child(1) { animation: fadeSlideIn 0.3s ease both 0.14s; }
 #view-lista-compras.active .shopping-item-card:nth-child(2) { animation: fadeSlideIn 0.3s ease both 0.20s; }
 #view-lista-compras.active .shopping-item-card:nth-child(3) { animation: fadeSlideIn 0.3s ease both 0.26s; }

@@ -51,9 +51,9 @@
       { id: 'tx_7', type: 'AJUSTE_SALDO', description: 'Rendimento da Reserva', category: 'Investimentos', account: 'Reserva de emergência', date: '2026-07-20', amount: 700.00, reason: 'Ajuste de rendimento CDB 100% CDI' }
     ],
     diary: [
-      { id: 'note_1', title: 'Aporte Mensal na Reserva', content: 'Planejar aporte adicional de pelo menos R$ 300 assim que entrar o bônus.', type: 'planejamento', date: '2026-07-20' },
+      { id: 'note_1', title: 'Aporte Mensal na Reserva', content: 'Planejar aporte adicional de pelo menos R$ 300 assim que entrar o bônus.', type: 'planejamento', date: '2026-07-20', valorAlvo: 3000, valorAtual: 2100 },
       { id: 'note_2', title: 'Gastos com iFood', content: 'Percebi que pedi comida 5 vezes esta semana. Meta: reduzir para no máximo 1x por semana.', type: 'reflexão', date: '2026-07-18' },
-      { id: 'note_3', title: 'Quitar Empréstimo', content: 'Objetivo de amortizar 3 parcelas do empréstimo Nubank até o fim do semestre.', type: 'meta', date: '2026-07-15' },
+      { id: 'note_3', title: 'Quitar Empréstimo', content: 'Objetivo de amortizar 3 parcelas do empréstimo Nubank até o fim do semestre.', type: 'meta', date: '2026-07-15', valorAlvo: 3000, valorAtual: 0 },
       { id: 'note_4', title: 'Revisar Assinaturas', content: 'Cancelar streaming que não estou utilizando ativamente.', type: 'lembrete', date: '2026-07-10' }
     ],
     shopping: [
@@ -720,34 +720,39 @@
         `).join('');
       }
 
-      const shoppingPreview = document.getElementById('diary-shopping-preview');
-      if (shoppingPreview) {
-        const items = State.shopping.slice(0, 4);
-        const estimatedTotal = State.shopping.reduce((total, item) => total + (item.estimatedPrice || 0) * (item.quantity || 1), 0);
-        const actualTotal = State.shopping.reduce((total, item) => total + (item.actualPrice || 0) * (item.quantity || 1), 0);
-        shoppingPreview.innerHTML = `
-          <div class="diary-shopping-summary">
-            <span>Estimado: <strong>${Formatters.currency(estimatedTotal)}</strong></span>
-            <span>Real até agora: <strong>${Formatters.currency(actualTotal)}</strong></span>
-          </div>
-          <div class="diary-shopping-items">
-            ${items.map(item => `
-              <div class="diary-shopping-row ${item.purchased ? 'is-purchased' : ''}">
-                <span class="diary-shopping-check">${item.purchased ? '✓' : '○'}</span>
-                <span>${item.title}</span>
-                <strong>${Formatters.currency(item.actualPrice || item.estimatedPrice)}</strong>
+      const planningContainer = document.getElementById('diary-planning-container');
+      if (planningContainer) {
+        const plannings = State.diary.filter(n => (n.type === 'planejamento' || n.type === 'meta') && NumberParser.value(n.valorAlvo) > 0);
+        planningContainer.innerHTML = plannings.length === 0
+          ? '<p class="diary-empty-message">Nenhum planejamento com valor alvo por enquanto. Crie uma entrada dos tipos Planejamento ou Meta e defina o valor alvo.</p>'
+          : plannings.map(n => {
+            const target = NumberParser.value(n.valorAlvo);
+            const current = NumberParser.value(n.valorAtual);
+            const pct = Math.min(100, Math.round((current / target) * 100));
+            const reached = current >= target;
+            return `
+              <div class="planning-card" data-id="${n.id}">
+                <div class="planning-card-header">
+                  <div>
+                    <span class="badge badge-${n.type === 'meta' ? 'warning' : 'accent'}" style="text-transform: uppercase;">${n.type}</span>
+                    <h4 class="planning-card-title">${n.title}</h4>
+                  </div>
+                  <button type="button" class="btn btn-danger btn-xs planning-delete-btn" data-id="${n.id}" title="Excluir planejamento">Excluir</button>
+                </div>
+                <div class="planning-values">
+                  <span class="planning-current">${Formatters.currency(current)}</span>
+                  <span class="planning-target">de ${Formatters.currency(target)} · ${pct}%</span>
+                </div>
+                <div class="progress-bar-bg planning-progress">
+                  <div class="progress-bar-fill ${reached ? 'planning-progress-done' : ''}" style="width: ${pct}%"></div>
+                </div>
+                <form class="planning-add-form">
+                  <input type="text" inputmode="decimal" class="form-input planning-add-input" placeholder="Valor a adicionar (R$)">
+                  <button type="submit" class="btn btn-primary btn-sm planning-add-btn">Adicionar</button>
+                </form>
               </div>
-            `).join('') || '<p class="diary-empty-message">Nenhum item adicionado ainda.</p>'}
-          </div>
-        `;
-      }
-
-      const noBuyPreview = document.getElementById('diary-no-buy-preview');
-      if (noBuyPreview) {
-        const noBuyItem = State.shopping.find(item => item.doNotBuyAgain);
-        noBuyPreview.innerHTML = noBuyItem
-          ? `<strong>${noBuyItem.title}</strong><span>Marcado para não comprar novamente.</span>`
-          : '<span>Nenhum produto marcado até o momento.</span>';
+            `;
+          }).join('');
       }
     },
 
@@ -773,6 +778,14 @@
 
       const purchasedCount = State.shopping.filter(i => i.purchased).length;
       document.getElementById('shopping-purchased-count').textContent = `${purchasedCount} comprados`;
+
+      const noBuyPreview = document.getElementById('diary-no-buy-preview');
+      if (noBuyPreview) {
+        const noBuyItem = State.shopping.find(item => item.doNotBuyAgain);
+        noBuyPreview.innerHTML = noBuyItem
+          ? `<strong>${noBuyItem.title}</strong><span>Marcado para não comprar novamente.</span>`
+          : '<span>Nenhum produto marcado até o momento.</span>';
+      }
     },
 
     profile: function () {
@@ -946,7 +959,7 @@
       }
 
       const navLinks = document.querySelectorAll('.nav-trigger');
-      const activeNavigationView = viewId === 'lista-compras' ? 'diario' : viewId;
+      const activeNavigationView = viewId;
       navLinks.forEach(link => {
         if (link.dataset.view === activeNavigationView) {
           link.classList.add('active');
@@ -1751,6 +1764,12 @@
           date: document.getElementById('diary-date-input').value || new Date().toISOString().split('T')[0]
         };
 
+        const targetValue = NumberParser.value(document.getElementById('diary-target-input')?.value);
+        if (targetValue > 0) {
+          newNote.valorAlvo = targetValue;
+          newNote.valorAtual = NumberParser.value(document.getElementById('diary-current-input')?.value);
+        }
+
         State.diary.unshift(newNote);
         StorageService.set(STORAGE_KEYS.DIARY, State.diary);
         diaryForm.reset();
@@ -1760,9 +1779,45 @@
     }
 
     document.getElementById('diary-type-select')?.addEventListener('change', function () {
-      if (this.value !== 'lista_compras') return;
+      if (this.value !== 'lista_compras') {
+        const valueFields = document.getElementById('diary-value-fields');
+        if (valueFields) {
+          valueFields.hidden = this.value !== 'planejamento' && this.value !== 'meta';
+        }
+        return;
+      }
       this.value = 'anotacao';
       Router.navigate('lista-compras');
+    });
+
+    document.addEventListener('submit', function (e) {
+      const addForm = e.target.closest('.planning-add-form');
+      if (!addForm) return;
+      e.preventDefault();
+      const card = addForm.closest('.planning-card');
+      const note = State.diary.find(n => n.id === card.dataset.id);
+      if (!note) return;
+      const amount = NumberParser.value(addForm.querySelector('.planning-add-input')?.value);
+      if (amount <= 0) {
+        Toast.show('Informe um valor maior que zero.', 'warning');
+        return;
+      }
+      note.valorAtual = NumberParser.value(note.valorAtual) + amount;
+      StorageService.set(STORAGE_KEYS.DIARY, State.diary);
+      Render.diary();
+      Toast.show(`${Formatters.currency(amount)} adicionado ao objetivo!`);
+    });
+
+    document.addEventListener('click', function (e) {
+      const deleteBtn = e.target.closest('.planning-delete-btn');
+      if (!deleteBtn) return;
+      const note = State.diary.find(n => n.id === deleteBtn.dataset.id);
+      if (!note) return;
+      if (!confirm(`Excluir o planejamento "${note.title}"? Ele também será removido da linha do tempo.`)) return;
+      State.diary = State.diary.filter(n => n.id !== note.id);
+      StorageService.set(STORAGE_KEYS.DIARY, State.diary);
+      Render.diary();
+      Toast.show('Planejamento excluído.');
     });
 
     const shoppingForm = document.getElementById('shopping-new-item-form');

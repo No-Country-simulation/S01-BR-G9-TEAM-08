@@ -227,6 +227,14 @@
             </a>
           </li>
           <li>
+            <a class="sidebar-link nav-trigger" data-view="lista-compras">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+              Lista de compras
+            </a>
+          </li>
+          <li>
             <a class="sidebar-link nav-trigger" data-view="alertas">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round"
@@ -772,11 +780,8 @@
           <div class="welcome-bar">
             <div>
               <h1 class="welcome-title">Diário financeiro</h1>
-              <p class="welcome-subtitle">Organize anotações, metas, planejamentos e compras em um só lugar.</p>
+              <p class="welcome-subtitle">Organize anotações, metas e planejamentos em um só lugar.</p>
             </div>
-            <button type="button" class="btn btn-primary nav-trigger" data-view="lista-compras">
-              + Nova lista de compras
-            </button>
           </div>
 
           <div class="diary-top-grid">
@@ -820,45 +825,49 @@
                     required></textarea>
                 </div>
 
+                <div id="diary-value-fields" class="diary-value-fields" hidden>
+                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                      <label for="diary-target-input" class="form-label">Valor alvo (R$)</label>
+                      <input type="text" inputmode="decimal" id="diary-target-input" class="form-input"
+                        placeholder="Ex: 3000,00">
+                    </div>
+                    <div class="form-group">
+                      <label for="diary-current-input" class="form-label">Valor inicial (R$)</label>
+                      <input type="text" inputmode="decimal" id="diary-current-input" class="form-input"
+                        placeholder="0,00">
+                    </div>
+                  </div>
+                  <p class="diary-value-helper">Planejamentos e metas com valor alvo aparecem no card de progresso.</p>
+                </div>
+
                 <button type="submit" class="btn btn-primary">Salvar Anotação</button>
               </form>
             </div>
 
-            <div class="diary-side-column">
-              <div class="card diary-shopping-card">
-                <div class="card-header">
-                  <div>
-                    <div class="card-title">Compras do mês</div>
-                    <p class="diary-card-subtitle">Acompanhe os itens comprados e registre o total no seu controle financeiro.</p>
-                  </div>
-                  <button type="button" class="btn btn-outline btn-sm nav-trigger" data-view="lista-compras">Ver lista</button>
-                </div>
-                <div id="diary-shopping-preview" class="diary-shopping-preview">
-                  <!-- Preenchido via JavaScript -->
+            <div class="card diary-planning-card">
+              <div class="card-header">
+                <div>
+                  <div class="card-title">Planejamentos e Metas</div>
+                  <p class="diary-card-subtitle">Acompanhe o progresso dos seus objetivos.</p>
                 </div>
               </div>
-
-              <div class="card diary-no-buy-card">
-                <div class="card-header">
-                  <div class="card-title">Não comprar novamente</div>
-                </div>
-                <div id="diary-no-buy-preview" class="diary-no-buy-preview">
-                  <!-- Preenchido via JavaScript -->
-                </div>
+              <div id="diary-planning-container" class="diary-planning-container">
+                <!-- Preenchido via JavaScript -->
               </div>
             </div>
           </div>
 
           <div class="card diary-timeline-card">
-              <div class="card-header">
-                <div>
-                  <div class="card-title">Linha do tempo</div>
-                  <p class="diary-card-subtitle">Suas anotações e decisões financeiras recentes.</p>
-                </div>
+            <div class="card-header">
+              <div>
+                <div class="card-title">Linha do tempo</div>
+                <p class="diary-card-subtitle">Suas anotações e decisões financeiras recentes.</p>
               </div>
-              <div id="diary-timeline-container" class="timeline">
-                <!-- Preenchido via JavaScript -->
-              </div>
+            </div>
+            <div id="diary-timeline-container" class="timeline">
+              <!-- Preenchido via JavaScript -->
+            </div>
           </div>
         </section>
 
@@ -868,10 +877,9 @@
           <div class="welcome-bar">
             <div>
               <h1 class="welcome-title">Lista de compras</h1>
-              <p class="welcome-subtitle">Diário financeiro · organize compras e converta itens pagos em despesas.</p>
+              <p class="welcome-subtitle">Organize compras e converta itens pagos em despesas.</p>
             </div>
             <div class="page-actions">
-              <button type="button" class="btn btn-outline nav-trigger" data-view="diario">Voltar ao diário</button>
               <button type="button" id="btn-convert-shopping-to-expense" class="btn btn-primary">
                 Lançar itens pagos
               </button>
@@ -891,6 +899,7 @@
                 <div class="form-group"><label for="shop-obs-input" class="form-label">Observação</label><input type="text" id="shop-obs-input" class="form-input" placeholder="Ex: marca, tamanho ou loja"></div>
                 <div class="form-group"><label for="shop-date-input" class="form-label">Data da lista</label><input type="date" id="shop-date-input" class="form-input"></div>
                 <label class="form-checkbox-label"><input type="checkbox" id="shop-do-not-buy-input"> Não comprar novamente</label>
+                <p class="diary-value-helper form-helper">ⓘ Itens marcados não entram na conversão em despesa e ficam na lista como lembrete de que você não quer comprá-los de novo.</p>
 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                   <div class="form-group">
@@ -930,6 +939,18 @@
               <div id="shopping-items-grid" class="shopping-list-grid">
                 <!-- Preenchido via JS -->
               </div>
+            </div>
+          </div>
+
+          <div class="card diary-no-buy-card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Não comprar novamente</div>
+                <p class="diary-card-subtitle">Produtos que você decidiu não comprar mais. Continuam na lista como lembrete e não viram despesa.</p>
+              </div>
+            </div>
+            <div id="diary-no-buy-preview" class="diary-no-buy-preview">
+              <!-- Preenchido via JavaScript -->
             </div>
           </div>
         </section>
