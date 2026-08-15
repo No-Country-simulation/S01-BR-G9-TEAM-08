@@ -37,5 +37,4 @@ public class Usuario {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private SituacaoConta situacaoConta = SituacaoConta.ATIVO;
-
 }
