@@ -1,4 +1,5 @@
 ### Teste com texto vazio (deve dar erro 400 de validação)
+
 POST http://localhost:8080/api/ia/processar-texto
 Content-Type: application/json
 
@@ -6,7 +7,10 @@ Content-Type: application/json
   "texto": ""
 }
 
-### Teste com texto válido (deve retornar o JSON mockado)
+###
+
+### Teste com texto válido (deve retornar o fallback da IA)
+
 POST http://localhost:8080/api/ia/processar-texto
 Content-Type: application/json
 

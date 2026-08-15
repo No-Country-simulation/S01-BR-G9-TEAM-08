@@ -1,7 +1,9 @@
 package br.com.FinanceAi.Backend.service;
 
 import br.com.FinanceAi.Backend.entity.Usuario;
+import br.com.FinanceAi.Backend.entity.enums.SituacaoConta;
 import br.com.FinanceAi.Backend.repository.UsuarioRepository;
+import br.com.FinanceAi.Backend.security.UsuarioAutenticado;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -32,19 +34,44 @@ public class AuthServiceTest {
     void deveRetornarUserDetailsQuandoEmailExistir() {
 
         String email = "test@email.com";
+
         Usuario usuario = Usuario.builder()
-                    .nome("test")
-                    .email(email)
-                    .senha("12345678")
+                .id(1L)
+                .nome("test")
+                .email(email)
+                .senha("12345678")
+                .situacaoConta(SituacaoConta.ATIVO)
                 .build();
 
         when(usuarioRepository.findByEmail(email))
                 .thenReturn(Optional.of(usuario));
 
-        UserDetails resultado = authService.loadUserByUsername(email);
+        UserDetails resultado =
+                authService.loadUserByUsername(email);
 
-        assertThat(resultado).isEqualTo(usuario);
-        verify(usuarioRepository).findByEmail(email);
+        assertThat(resultado)
+                .isInstanceOf(UsuarioAutenticado.class);
+
+        UsuarioAutenticado usuarioAutenticado =
+                (UsuarioAutenticado) resultado;
+
+        assertThat(usuarioAutenticado.getId())
+                .isEqualTo(usuario.getId());
+
+        assertThat(usuarioAutenticado.getNome())
+                .isEqualTo(usuario.getNome());
+
+        assertThat(usuarioAutenticado.getUsername())
+                .isEqualTo(usuario.getEmail());
+
+        assertThat(usuarioAutenticado.getPassword())
+                .isEqualTo(usuario.getSenha());
+
+        assertThat(usuarioAutenticado.getSituacaoConta())
+                .isEqualTo(SituacaoConta.ATIVO);
+
+        verify(usuarioRepository)
+                .findByEmail(email);
     }
 
     @Test
@@ -52,13 +79,17 @@ public class AuthServiceTest {
     void deveLancarExcecaoQuandoEmailNaoExistir() {
 
         String email = "naoexiste@email.com";
+
         when(usuarioRepository.findByEmail(email))
                 .thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> authService.loadUserByUsername(email))
+        assertThatThrownBy(
+                () -> authService.loadUserByUsername(email)
+        )
                 .isInstanceOf(UsernameNotFoundException.class)
                 .hasMessageContaining(email);
 
-        verify(usuarioRepository).findByEmail(email);
+        verify(usuarioRepository)
+                .findByEmail(email);
     }
 }

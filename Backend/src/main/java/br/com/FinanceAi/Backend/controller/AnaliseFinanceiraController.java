@@ -1,29 +1,29 @@
 package br.com.FinanceAi.Backend.controller;
 
-import br.com.FinanceAi.Backend.dto.response.DashboardResponse;
+import br.com.FinanceAi.Backend.dto.response.AnaliseFinanceiraResponse;
 import br.com.FinanceAi.Backend.security.UsuarioAutenticado;
-import br.com.FinanceAi.Backend.service.DashboardService;
+import br.com.FinanceAi.Backend.service.AnaliseFinanceiraService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/dashboard")
+@RequestMapping("/analise-financeira")
 @RequiredArgsConstructor
-public class DashboardController {
+public class AnaliseFinanceiraController {
 
-    private final DashboardService dashboardService;
+    private final AnaliseFinanceiraService analiseFinanceiraService;
 
-    @GetMapping
-    public ResponseEntity<DashboardResponse> dashboard(
+    @PostMapping
+    public ResponseEntity<AnaliseFinanceiraResponse> analisar(
             @AuthenticationPrincipal UsuarioAutenticado usuarioAutenticado
     ) {
 
-        DashboardResponse response =
-                dashboardService.gerarDashboard(
+        AnaliseFinanceiraResponse response =
+                analiseFinanceiraService.analisar(
                         usuarioAutenticado.getId()
                 );
 
