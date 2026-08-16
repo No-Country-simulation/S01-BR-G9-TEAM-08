@@ -227,6 +227,15 @@
             </a>
           </li>
           <li>
+            <a class="sidebar-link nav-trigger" data-view="lista-compras">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+              Lista de Compras
+            </a>
+          </li>
+          <li style="display: none;">
             <a class="sidebar-link nav-trigger" data-view="alertas">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round"
@@ -358,7 +367,7 @@
               <strong id="dash-total-debt">R$ 4.200,00</strong>
               <small>Ver contas e obrigações</small>
             </button>
-            <button type="button" class="card dashboard-summary-link nav-trigger" data-view="alertas">
+            <button type="button" class="card dashboard-summary-link nav-trigger" data-view="alertas" style="display: none;">
               <span class="summary-link-label">Alertas não lidos</span>
               <strong id="dash-unread-alerts">3</strong>
               <small>Revisar avisos importantes</small>
@@ -802,7 +811,6 @@
                   <label for="diary-type-select" class="form-label">Tipo</label>
                   <select id="diary-type-select" class="form-select">
                     <option value="anotacao">Anotação</option>
-                    <option value="lista_compras">Lista de compras</option>
                     <option value="planejamento">Planejamento</option>
                     <option value="reflexão">Reflexão</option>
                     <option value="meta">Meta</option>

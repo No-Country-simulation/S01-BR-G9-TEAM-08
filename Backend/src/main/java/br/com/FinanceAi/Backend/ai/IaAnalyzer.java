@@ -36,11 +36,16 @@ public class IaAnalyzer {
                     ? json.get("categoria").asText()
                     : null;
 
+            String formaPagamento = json.hasNonNull("formaPagamento")
+                    ? json.get("formaPagamento").asText()
+                    : null;
+
             return new ResultadoAnaliseIA(
                     tipo,
                     descricao,
                     valor,
-                    categoria
+                    categoria,
+                    formaPagamento
             );
 
         } catch (Exception e) {
@@ -48,6 +53,7 @@ public class IaAnalyzer {
             return new ResultadoAnaliseIA(
                     TipoResultadoIA.ANOTACAO,
                     respostaIaJson,
+                    null,
                     null,
                     null
             );

@@ -125,9 +125,7 @@ public class DespesaService {
 
         Despesa despesa = buscarPorId(id, usuarioId);
 
-        despesa.setAtivo(false);
-
-        despesaRepository.save(despesa);
+        despesaRepository.delete(despesa);
     }
 
     private Categoria classificarCategoria(String descricao) {

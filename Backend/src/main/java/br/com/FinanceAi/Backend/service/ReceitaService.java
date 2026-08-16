@@ -77,8 +77,6 @@ public class ReceitaService {
 
         Receita receita = buscarPorId(id, usuarioId);
 
-        receita.setAtivo(false);
-
-        receitaRepository.save(receita);
+        receitaRepository.delete(receita);
     }
 }

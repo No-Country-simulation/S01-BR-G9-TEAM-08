@@ -101,9 +101,7 @@ public class ItemCompraService {
 
         ItemCompra item = buscarPorId(id, usuarioId);
 
-        item.setAtivo(false);
-
-        itemCompraRepository.save(item);
+        itemCompraRepository.delete(item);
     }
 
     @Transactional

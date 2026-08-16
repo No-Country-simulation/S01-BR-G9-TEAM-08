@@ -90,8 +90,6 @@ public class DiarioService {
         DiarioFinanceiro diario =
                 buscarPorId(id, usuarioId);
 
-        diario.setAtivo(false);
-
-        diarioRepository.save(diario);
+        diarioRepository.delete(diario);
     }
 }

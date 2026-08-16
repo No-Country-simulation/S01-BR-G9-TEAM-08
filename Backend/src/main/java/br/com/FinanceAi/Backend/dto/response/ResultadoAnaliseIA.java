@@ -12,7 +12,9 @@ public record ResultadoAnaliseIA(
 
         BigDecimal valor,
 
-        String categoria
+        String categoria,
+
+        String formaPagamento
 
 ) {
 }

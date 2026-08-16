@@ -51,7 +51,8 @@ public class IAService {
                               "tipo": "TRANSACAO",
                               "descricao": "descrição da movimentação",
                               "valor": 0.00,
-                              "categoria": "categoria"
+                              "categoria": "categoria",
+                              "formaPagamento": "forma de pagamento"
                             }
 
                             Valores permitidos para tipo:
@@ -59,8 +60,37 @@ public class IAService {
                             - LEMBRETE
                             - ANOTACAO
 
+                            CATEGORIAS - Use EXATAMENTE estas categorias:
+                            - TRANSPORTE (Uber, taxi, combustível, transporte público, passagens)
+                            - ALIMENTAÇÃO (comida, restaurante, mercado, lanches)
+                            - MORADIA (aluguel, condomínio, luz, água, internet)
+                            - SAÚDE (remédios, consultas, planos de saúde)
+                            - EDUCAÇÃO (cursos, livros, material escolar)
+                            - LAZER (cinema, viagens, jogos, entretenimento)
+                            - VESTUÁRIO (roupas, calçados, acessórios)
+                            - OUTROS (qualquer outra categoria não listada)
+
+                            FORMAS DE PAGAMENTO - Use EXATAMENTE estas:
+                            - DINHEIRO
+                            - DÉBITO
+                            - CRÉDITO
+                            - PIX
+                            - BOLETO
+                            - TRANSFERÊNCIA
+
+                            REGRAS DE CLASSIFICAÇÃO:
+                            - Uber/taxa = TRANSPORTE (nunca ALIMENTAÇÃO)
+                            - Restaurantes/lanches = ALIMENTAÇÃO
+                            - Supermercado = ALIMENTAÇÃO
+                            - Combustível = TRANSPORTE
+                            - Se o usuário mencionar "crédito", use CRÉDITO em formaPagamento
+                            - Se o usuário mencionar "débito", use DÉBITO em formaPagamento
+                            - Se o usuário mencionar "pix", use PIX em formaPagamento
+                            - Se o usuário mencionar "dinheiro" ou "à vista", use DINHEIRO em formaPagamento
+
                             Se não existir valor, use null.
-                            Se não existir categoria, use null.
+                            Se não existir categoria, use OUTROS.
+                            Se não existir forma de pagamento, use null.
 
                             Não escreva nenhum texto fora do JSON.
                             """)
@@ -81,6 +111,7 @@ public class IAService {
                 fallback.put("descricao", texto);
                 fallback.putNull("valor");
                 fallback.putNull("categoria");
+                fallback.putNull("formaPagamento");
 
                 return objectMapper.writeValueAsString(fallback);
 
@@ -93,7 +124,8 @@ public class IAService {
                           "tipo": "ANOTACAO",
                           "descricao": "Não foi possível processar o texto.",
                           "valor": null,
-                          "categoria": null
+                          "categoria": null,
+                          "formaPagamento": null
                         }
                         """;
             }

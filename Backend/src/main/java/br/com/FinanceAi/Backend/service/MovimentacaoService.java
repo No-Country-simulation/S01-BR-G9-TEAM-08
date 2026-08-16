@@ -151,8 +151,22 @@ public class MovimentacaoService {
         // Reverte efeito no saldo
         aplicarEfeitoSaldo(movimentacao.getTipo(), movimentacao.getValor(), movimentacao.getSaldoReal(), contaOrigem, contaDestino, -1);
 
-        movimentacao.setAtivo(false);
-        movimentacaoRepository.save(movimentacao);
+        movimentacaoRepository.delete(movimentacao);
+
+        // Limpar registro sincronizado nas tabelas legadas
+        try {
+            if (movimentacao.getTipo() == TipoMovimentacaoEnum.RECEITA) {
+                receitaRepository.findByUsuarioIdAndAtivoTrueOrderByDataDesc(usuarioId).stream()
+                        .filter(r -> r.getDescricao().equals(movimentacao.getDescricao()) && r.getValor().compareTo(movimentacao.getValor()) == 0 && r.getData().equals(movimentacao.getData()))
+                        .findFirst().ifPresent(receitaRepository::delete);
+            } else if (movimentacao.getTipo() == TipoMovimentacaoEnum.DESPESA) {
+                despesaRepository.findByUsuarioIdAndAtivoTrueOrderByDataDesc(usuarioId).stream()
+                        .filter(d -> d.getDescricao().equals(movimentacao.getDescricao()) && d.getValor().compareTo(movimentacao.getValor()) == 0 && d.getData().equals(movimentacao.getData()))
+                        .findFirst().ifPresent(despesaRepository::delete);
+            }
+        } catch (Exception e) {
+            // Não bloqueia caso falhe a exclusão sincronizada
+        }
     }
 
     private Conta buscarOuCriarConta(Long contaId, String contaNome, Long usuarioId, String nomePadrao) {

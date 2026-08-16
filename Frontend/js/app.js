@@ -83,7 +83,7 @@
       localStorage.setItem(STORAGE_KEYS.ACCOUNTS, JSON.stringify([]));
       localStorage.setItem(STORAGE_KEYS.TRANSACTIONS, JSON.stringify([]));
       localStorage.setItem(STORAGE_KEYS.DEBTS, JSON.stringify([]));
-      localStorage.setItem(STORAGE_KEYS.DIARY, JSON.stringify([]));
+      // Diário agora é carregado apenas do backend
       localStorage.setItem(STORAGE_KEYS.SHOPPING, JSON.stringify([]));
       localStorage.setItem(STORAGE_KEYS.ALERTS, JSON.stringify([]));
       localStorage.setItem(STORAGE_KEYS.RECOMMENDATIONS, JSON.stringify([]));
@@ -177,7 +177,7 @@
         StorageService.set(STORAGE_KEYS.TRANSACTIONS, this.transactions);
       }
       this.debts = StorageService.get(STORAGE_KEYS.DEBTS) || [];
-      this.diary = StorageService.get(STORAGE_KEYS.DIARY) || [];
+      this.diary = []; // Carrega apenas da API
       this.shopping = StorageService.get(STORAGE_KEYS.SHOPPING) || [];
       let shoppingDatesUpdated = false;
       this.shopping.forEach(item => {
@@ -211,24 +211,51 @@
   const AiEngine = {
     fromApiResponse: function (res, originalText) {
       if (!res) return null;
-      let type = 'DESPESA';
-      let amount = 0;
-      let category = 'Alimentação';
-      let description = originalText;
-      let confidence = Math.round((res.probabilidade || 0.82) * 100);
 
-      if (res.resumo_gastos && typeof res.resumo_gastos === 'object') {
-        const entries = Object.entries(res.resumo_gastos);
-        if (entries.length > 0) {
-          category = entries[0][0].charAt(0).toUpperCase() + entries[0][0].slice(1);
-          amount = entries[0][1] || 0;
+      // Mapeamento de tipos do backend para o frontend
+      const tipoMap = {
+        'TRANSACAO': 'DESPESA',
+        'LEMBRETE': 'DESPESA',
+        'ANOTACAO': 'DESPESA'
+      };
+
+      let type = tipoMap[res.tipo] || 'DESPESA';
+      let amount = res.valor || 0;
+      let category = res.categoria || 'Alimentação';
+      let description = res.descricao || originalText;
+      let paymentMethod = res.formaPagamento || 'PIX';
+
+      // Se não tiver valor, tenta extrair do texto original
+      if (!amount || amount === 0) {
+        const valMatch = originalText.match(/(?:R\$\s*)?(\d+(?:[.,]\d{1,2})?)/i);
+        if (valMatch) {
+          amount = parseFloat(valMatch[1].replace(',', '.'));
         }
       }
 
-      const valMatch = originalText.match(/(?:R\$\s*)?(\d+(?:[.,]\d{1,2})?)/i);
-      if (valMatch) {
-        amount = parseFloat(valMatch[1].replace(',', '.'));
-      }
+      // Normalização de categoria para o formato do frontend
+      const categoryMap = {
+        'TRANSPORTE': 'Transporte',
+        'ALIMENTAÇÃO': 'Alimentação',
+        'MORADIA': 'Moradia',
+        'SAÚDE': 'Saúde',
+        'EDUCAÇÃO': 'Educação',
+        'LAZER': 'Lazer',
+        'VESTUÁRIO': 'Vestuário',
+        'OUTROS': 'Outros'
+      };
+      category = categoryMap[category?.toUpperCase()] || category || 'Alimentação';
+
+      // Normalização de forma de pagamento
+      const paymentMap = {
+        'DINHEIRO': 'Dinheiro',
+        'DÉBITO': 'Débito',
+        'CRÉDITO': 'Crédito',
+        'PIX': 'PIX',
+        'BOLETO': 'Boleto',
+        'TRANSFERÊNCIA': 'Transferência'
+      };
+      paymentMethod = paymentMap[paymentMethod?.toUpperCase()] || paymentMethod || 'PIX';
 
       const defaultAccount = State.accounts[0]?.name || 'Carteira';
 
@@ -236,10 +263,10 @@
         type,
         amount: amount || 35.00,
         description: description || 'Movimentação via IA',
-        category: category || 'Alimentação',
-        paymentMethod: 'PIX',
+        category: category,
+        paymentMethod: paymentMethod,
         account: defaultAccount,
-        confidenceScore: confidence || 82,
+        confidenceScore: 95,
         date: new Date().toISOString().split('T')[0]
       };
     },
@@ -939,6 +966,7 @@
         const txReceitas = receitas.map(r => ({
           id: r.id,
           backendId: r.id,
+          legacyEndpoint: 'receitas',
           type: 'RECEITA',
           description: r.descricao,
           amount: NumberParser.value(r.valor),
@@ -952,6 +980,7 @@
         const txDespesas = despesas.map(d => ({
           id: d.id,
           backendId: d.id,
+          legacyEndpoint: 'despesas',
           type: 'DESPESA',
           description: d.descricao,
           amount: NumberParser.value(d.valor),
@@ -978,7 +1007,7 @@
           type: (n.tipo || 'anotacao').toLowerCase(),
           date: n.data
         }));
-        StorageService.set(STORAGE_KEYS.DIARY, State.diary);
+        // Não salva no Storage para forçar leitura sempre do DB
       }
 
       // Sincronizar Lista de Compras
@@ -1271,9 +1300,16 @@
     },
 
     deleteTransaction: async function (transaction) {
-      if (window.ApiService && ApiService.isAuthenticated() && !String(transaction.id).startsWith('tx_')) {
+      const backendId = transaction.backendId || transaction.id;
+      const isLocal = String(transaction.id).startsWith('tx_') && !transaction.backendId;
+
+      if (window.ApiService && ApiService.isAuthenticated() && !isLocal) {
         try {
-          await ApiService.movimentacoes.excluir(transaction.id);
+          if (transaction.legacyEndpoint) {
+            await ApiService.request(`/${transaction.legacyEndpoint}/${backendId}`, { method: 'DELETE' });
+          } else {
+            await ApiService.movimentacoes.excluir(backendId);
+          }
         } catch (apiErr) {
           console.error('[FinGuardian Excluir Movimentação] Erro no backend:', apiErr);
           Toast.show(apiErr.message || 'Erro ao excluir movimentação no servidor.', 'error');
@@ -1291,9 +1327,32 @@
     },
 
     updateTransaction: async function (transaction, changes) {
-      if (window.ApiService && ApiService.isAuthenticated() && !String(transaction.id).startsWith('tx_')) {
+      const backendId = transaction.backendId || transaction.id;
+      const isLocal = String(transaction.id).startsWith('tx_') && !transaction.backendId;
+
+      if (window.ApiService && ApiService.isAuthenticated() && !isLocal) {
         try {
-          await ApiService.movimentacoes.atualizar(transaction.id, {
+          if (transaction.legacyEndpoint === 'receitas') {
+            await ApiService.request(`/receitas/${backendId}`, {
+              method: 'PUT',
+              body: JSON.stringify({
+                descricao: changes.description || transaction.description,
+                valor: NumberParser.value(changes.amount !== undefined ? changes.amount : transaction.amount),
+                data: changes.date || transaction.date
+              })
+            });
+          } else if (transaction.legacyEndpoint === 'despesas') {
+            await ApiService.request(`/despesas/${backendId}`, {
+              method: 'PUT',
+              body: JSON.stringify({
+                descricao: changes.description || transaction.description,
+                valor: NumberParser.value(changes.amount !== undefined ? changes.amount : transaction.amount),
+                data: changes.date || transaction.date,
+                categoria: changes.category !== undefined ? changes.category : transaction.category
+              })
+            });
+          } else {
+            await ApiService.movimentacoes.atualizar(backendId, {
             tipo: changes.type || transaction.type,
             descricao: changes.description || transaction.description,
             valor: NumberParser.value(changes.amount !== undefined ? changes.amount : transaction.amount),
@@ -1305,6 +1364,7 @@
             recorrencia: changes.recurrence || transaction.recurrence,
             observacoes: changes.obs !== undefined ? changes.obs : transaction.obs
           });
+          }
         } catch (apiErr) {
           console.error('[FinGuardian Atualizar Movimentação] Erro no backend:', apiErr);
           Toast.show(apiErr.message || 'Erro ao atualizar movimentação no servidor.', 'error');
@@ -1376,9 +1436,8 @@
       }
 
       const navLinks = document.querySelectorAll('.nav-trigger');
-      const activeNavigationView = viewId === 'lista-compras' ? 'diario' : viewId;
       navLinks.forEach(link => {
-        if (link.dataset.view === activeNavigationView) {
+        if (link.dataset.view === viewId) {
           link.classList.add('active');
         } else {
           link.classList.remove('active');
@@ -1536,12 +1595,56 @@
 
   // --- Bindings ---
   function bindEvents() {
+    // Variável para controle de edição de transação
+    let editingTransactionId = null;
+
     document.addEventListener('click', function (e) {
       const trigger = e.target.closest('.nav-trigger');
       if (trigger) {
         e.preventDefault();
         const view = trigger.dataset.view;
         if (view) Router.navigate(view);
+      }
+
+      // Ações de transações (Detalhes, Editar, Excluir)
+      const txButton = e.target.closest('.tx-action');
+      if (txButton) {
+        const tx = State.transactions.find(item => String(item.id) === String(txButton.dataset.id));
+        if (!tx) return;
+
+        const action = txButton.dataset.txAction;
+        const transactionTypeLabel = tx.origin === 'CADASTRO_CONTA' ? 'Saldo inicial' : tx.type;
+        const modal = document.getElementById('modal-transaction');
+        editingTransactionId = tx.id;
+
+        if (action === 'delete') {
+          if (confirm('Excluir esta movimentação?')) {
+            FinancialStore.deleteTransaction(tx).then(deleted => {
+              if (deleted) {
+                Toast.show('Movimentação excluída e saldo recalculado.');
+              }
+            });
+          }
+          return;
+        }
+
+        modal.classList.add('active');
+        document.getElementById('transaction-details-content').innerHTML = `<p><strong>${tx.description}</strong></p><p>${transactionTypeLabel} · ${Formatters.currency(tx.amount)} · ${Formatters.date(tx.date)}</p><p>Categoria: ${tx.category || '—'} · Conta: ${tx.account || '—'} · Pagamento: ${tx.paymentMethod || '—'}</p><p>${tx.obs || tx.reason || ''}</p>`;
+
+        if (action === 'edit') {
+          document.getElementById('transaction-edit-form').style.display = 'block';
+          document.getElementById('btn-save-edit-transaction').style.display = 'inline-flex';
+          document.getElementById('btn-start-edit-transaction').style.display = 'none';
+          document.getElementById('tx-edit-description').value = tx.description;
+          document.getElementById('tx-edit-amount').value = tx.amount;
+          document.getElementById('tx-edit-category').value = tx.category || '';
+          document.getElementById('tx-edit-payment').value = tx.paymentMethod || '';
+          document.getElementById('tx-edit-date').value = tx.date;
+        } else {
+          document.getElementById('transaction-edit-form').style.display = 'none';
+          document.getElementById('btn-save-edit-transaction').style.display = 'none';
+          document.getElementById('btn-start-edit-transaction').style.display = 'inline-flex';
+        }
       }
     });
 
@@ -2045,7 +2148,15 @@
 
         if (window.ApiService && ApiService.isAuthenticated()) {
           try {
-            await ApiService.request('/lista-compras/lancar-pagos', { method: 'POST' });
+            const txDate = document.getElementById('convert-shopping-date-input').value || FinancialStore.today();
+            const txCategory = document.getElementById('convert-shopping-category-select').value || 'Alimentação';
+            await ApiService.request('/lista-compras/lancar-pagos', {
+              method: 'POST',
+              body: JSON.stringify({
+                categoria: txCategory,
+                data: txDate
+              })
+            });
             // Recarrega transações e lista de compras atualizadas do backend
             const [despesasRes, comprasRes] = await Promise.allSettled([
               ApiService.request('/despesas', { method: 'GET' }),
@@ -2242,29 +2353,8 @@
       });
     });
 
-    let editingTransactionId = null;
+    // Ações em Contas Bancárias
     document.addEventListener('click', async function (e) {
-      const txButton = e.target.closest('.tx-action');
-      if (txButton) {
-        const tx = State.transactions.find(item => item.id === txButton.dataset.id); if (!tx) return;
-        const transactionTypeLabel = tx.origin === 'CADASTRO_CONTA' ? 'Saldo inicial' : tx.type;
-        const modal = document.getElementById('modal-transaction'); modal.classList.add('active'); editingTransactionId = tx.id;
-        document.getElementById('transaction-details-content').innerHTML = `<p><strong>${tx.description}</strong></p><p>${transactionTypeLabel} · ${Formatters.currency(tx.amount)} · ${Formatters.date(tx.date)}</p><p>Categoria: ${tx.category || '—'} · Conta: ${tx.account || '—'} · Pagamento: ${tx.paymentMethod || '—'}</p><p>${tx.obs || tx.reason || ''}</p>`;
-        document.getElementById('transaction-edit-form').style.display = txButton.dataset.txAction === 'edit' ? 'block' : 'none'; document.getElementById('btn-save-edit-transaction').style.display = txButton.dataset.txAction === 'edit' ? 'inline-flex' : 'none'; document.getElementById('btn-start-edit-transaction').style.display = txButton.dataset.txAction === 'edit' ? 'none' : 'inline-flex';
-        if (txButton.dataset.txAction === 'delete') {
-          modal.classList.remove('active');
-          if (confirm('Excluir esta movimentação?')) {
-            const deleted = await FinancialStore.deleteTransaction(tx);
-            if (deleted) {
-              Toast.show('Movimentação excluída e saldo recalculado.');
-            }
-          }
-          return;
-        }
-        if (txButton.dataset.txAction === 'edit') { document.getElementById('tx-edit-description').value = tx.description; document.getElementById('tx-edit-amount').value = tx.amount; document.getElementById('tx-edit-category').value = tx.category || ''; document.getElementById('tx-edit-payment').value = tx.paymentMethod || ''; document.getElementById('tx-edit-date').value = tx.date; }
-      }
-
-      // Ações em Contas Bancárias
       const accountButton = e.target.closest('.account-action');
       if (accountButton) {
         const acc = State.accounts.find(account => String(account.id) === String(accountButton.dataset.id));
@@ -2359,7 +2449,7 @@
             await ApiService.diario.excluir(noteId);
           }
           State.diary = State.diary.filter(n => String(n.id) !== String(noteId));
-          StorageService.set(STORAGE_KEYS.DIARY, State.diary);
+          // StorageService removido, apenas DB
           Render.diary();
           Toast.show('Anotação excluída com sucesso.');
         } catch (err) {
@@ -2490,9 +2580,9 @@
       if (!actionButton) return;
       const id = actionButton.dataset.id;
       if (actionButton.dataset.analysisAction === 'delete') {
-        const analysis = State.analysisHistory.find(item => item.id === id);
+        const analysis = State.analysisHistory.find(item => String(item.id) === String(id));
         if (!analysis) return;
-        State.analysisHistory = State.analysisHistory.filter(item => item.id !== id);
+        State.analysisHistory = State.analysisHistory.filter(item => String(item.id) !== String(id));
         State.deletedAnalyses.unshift({ ...analysis, deletedAt: new Date().toISOString() });
         StorageService.set(STORAGE_KEYS.ANALYSIS_HISTORY, State.analysisHistory);
         StorageService.set(STORAGE_KEYS.DELETED_ANALYSES, State.deletedAnalyses);
@@ -2500,9 +2590,9 @@
         Toast.show('Análise movida para itens excluídos. Você pode restaurá-la quando quiser.');
       }
       if (actionButton.dataset.analysisAction === 'restore') {
-        const analysis = State.deletedAnalyses.find(item => item.id === id);
+        const analysis = State.deletedAnalyses.find(item => String(item.id) === String(id));
         if (!analysis) return;
-        State.deletedAnalyses = State.deletedAnalyses.filter(item => item.id !== id);
+        State.deletedAnalyses = State.deletedAnalyses.filter(item => String(item.id) !== String(id));
         delete analysis.deletedAt;
         State.analysisHistory.unshift(analysis);
         StorageService.set(STORAGE_KEYS.ANALYSIS_HISTORY, State.analysisHistory);
@@ -2595,7 +2685,7 @@
     document.addEventListener('click', function (e) {
       const button = e.target.closest('.account-action[data-account-action="edit"]');
       if (!button) return;
-      const acc = State.accounts.find(item => item.id === button.dataset.id);
+      const acc = State.accounts.find(item => String(item.id) === String(button.dataset.id));
       if (!acc) return;
       editingAccountId = acc.id;
       document.getElementById('acc-name-input').value = acc.name;
@@ -2674,7 +2764,7 @@
         }
 
         State.diary.unshift(newNote);
-        StorageService.set(STORAGE_KEYS.DIARY, State.diary);
+        // Storage removido para forçar DB
         diaryForm.reset();
         Render.diary();
         Toast.show('Anotação salva no diário com sucesso!', 'success');
@@ -2684,12 +2774,6 @@
         }
       });
     }
-
-    document.getElementById('diary-type-select')?.addEventListener('change', function () {
-      if (this.value !== 'lista_compras') return;
-      this.value = 'anotacao';
-      Router.navigate('lista-compras');
-    });
 
     const shoppingForm = document.getElementById('shopping-new-item-form');
     if (shoppingForm) {
@@ -2745,7 +2829,7 @@
     document.addEventListener('click', function (e) {
       if (e.target.classList.contains('mark-alert-read-btn')) {
         const id = e.target.dataset.id;
-        const alt = State.alerts.find(a => a.id === id);
+        const alt = State.alerts.find(a => String(a.id) === String(id));
         if (alt) {
           alt.read = true;
           StorageService.set(STORAGE_KEYS.ALERTS, State.alerts);
@@ -2756,7 +2840,7 @@
 
       if (e.target.classList.contains('accept-rec-btn')) {
         const id = e.target.dataset.id;
-        const rec = State.recommendations.find(r => r.id === id);
+        const rec = State.recommendations.find(r => String(r.id) === String(id));
         if (rec) {
           rec.accepted = true;
           StorageService.set(STORAGE_KEYS.RECOMMENDATIONS, State.recommendations);
