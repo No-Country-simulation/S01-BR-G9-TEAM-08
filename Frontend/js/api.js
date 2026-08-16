@@ -474,6 +474,105 @@
     },
 
     /* ==========================================================================
+       ENDPOINTS DE MOVIMENTAÇÕES (MovimentacaoController)
+       ========================================================================== */
+    movimentacoes: {
+      /**
+       * Lista todas as movimentações do usuário autenticado.
+       * GET /movimentacoes
+       */
+      listar: function (params = {}) {
+        let query = '';
+        const searchParams = new URLSearchParams();
+        if (params.tipo) searchParams.append('tipo', params.tipo);
+        if (params.dataInicio) searchParams.append('dataInicio', params.dataInicio);
+        if (params.dataFim) searchParams.append('dataFim', params.dataFim);
+        const qs = searchParams.toString();
+        if (qs) query = `?${qs}`;
+
+        return ApiService.request(`/movimentacoes${query}`, {
+          method: 'GET'
+        });
+      },
+
+      /**
+       * Busca uma movimentação pelo ID.
+       * GET /movimentacoes/{id}
+       */
+      buscarPorId: function (id) {
+        return ApiService.request(`/movimentacoes/${id}`, {
+          method: 'GET'
+        });
+      },
+
+      /**
+       * Cadastra uma nova movimentação.
+       * POST /movimentacoes
+       */
+      criar: function (data) {
+        return ApiService.request('/movimentacoes', {
+          method: 'POST',
+          body: JSON.stringify({
+            tipo: data.tipo || data.type,
+            descricao: data.descricao || data.description,
+            valor: data.valor !== undefined ? data.valor : data.amount,
+            data: data.data || data.date,
+            categoria: data.categoria || data.category,
+            subcategoria: data.subcategoria || data.subcategory,
+            contaOrigemId: data.contaOrigemId || data.accountId,
+            contaOrigemNome: data.contaOrigemNome || data.account,
+            contaDestinoId: data.contaDestinoId || data.destinationAccountId,
+            contaDestinoNome: data.contaDestinoNome || data.destinationAccount,
+            formaPagamento: data.formaPagamento || data.paymentMethod,
+            recorrencia: data.recorrencia || data.recurrence || 'Única',
+            observacoes: data.observacoes || data.obs,
+            saldoReal: data.saldoReal !== undefined ? data.saldoReal : data.realBalance,
+            motivoAjuste: data.motivoAjuste || data.reason,
+            origemIA: Boolean(data.origemIA || data.origin === 'CONVERSA_IA')
+          })
+        });
+      },
+
+      /**
+       * Atualiza uma movimentação existente.
+       * PUT /movimentacoes/{id}
+       */
+      atualizar: function (id, data) {
+        return ApiService.request(`/movimentacoes/${id}`, {
+          method: 'PUT',
+          body: JSON.stringify({
+            tipo: data.tipo || data.type,
+            descricao: data.descricao || data.description,
+            valor: data.valor !== undefined ? data.valor : data.amount,
+            data: data.data || data.date,
+            categoria: data.categoria || data.category,
+            subcategoria: data.subcategoria || data.subcategory,
+            contaOrigemId: data.contaOrigemId || data.accountId,
+            contaOrigemNome: data.contaOrigemNome || data.account,
+            contaDestinoId: data.contaDestinoId || data.destinationAccountId,
+            contaDestinoNome: data.contaDestinoNome || data.destinationAccount,
+            formaPagamento: data.formaPagamento || data.paymentMethod,
+            recorrencia: data.recorrencia || data.recurrence,
+            observacoes: data.observacoes || data.obs,
+            saldoReal: data.saldoReal !== undefined ? data.saldoReal : data.realBalance,
+            motivoAjuste: data.motivoAjuste || data.reason,
+            origemIA: Boolean(data.origemIA)
+          })
+        });
+      },
+
+      /**
+       * Exclui uma movimentação.
+       * DELETE /movimentacoes/{id}
+       */
+      excluir: function (id) {
+        return ApiService.request(`/movimentacoes/${id}`, {
+          method: 'DELETE'
+        });
+      }
+    },
+
+    /* ==========================================================================
        ENDPOINTS DE IA (IAController)
        ========================================================================== */
     ia: {

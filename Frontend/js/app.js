@@ -24,56 +24,24 @@
     SECURITY: 'finguardian_security_preferences'
   };
 
-  // --- Dados de Demonstração Iniciais (Figma Exact Values) ---
-  const INITIAL_DEMO_DATA = {
+  // --- Estado Inicial Padrão Limpo ---
+  const DEFAULT_INITIAL_STATE = {
     user: {
-      name: 'Taniara Silva',
-      email: 'taniara@email.com',
-      monthlyIncome: 4500.00,
-      profileStatus: 'EM OBSERVAÇÃO',
-      confidenceScore: 82
+      name: 'Usuário',
+      email: '',
+      monthlyIncome: 0,
+      profileStatus: 'SAUDÁVEL',
+      confidenceScore: 100
     },
-    accounts: [
-      { id: 'acc_1', name: 'Nubank', institution: 'Nubank', type: 'conta corrente', currency: 'BRL', balance: 1850.00, creditLimit: 5000.00, overdraftLimit: 0.00, status: 'Ativa' },
-      { id: 'acc_2', name: 'Banco Inter', institution: 'Banco Inter', type: 'conta corrente', currency: 'BRL', balance: 1000.00, creditLimit: 2500.00, overdraftLimit: 500.00, status: 'Ativa' },
-      { id: 'acc_3', name: 'Reserva de emergência', institution: 'Tesouro Direto / Nubank', type: 'investimento', currency: 'BRL', balance: 2000.00, creditLimit: 0.00, overdraftLimit: 0.00, status: 'Ativa' }
-    ],
-    debts: [
-      { id: 'debt_1', description: 'Empréstimo Pessoal Nubank', originalAmount: 8000.00, remainingBalance: 4200.00, installmentValue: 380.00, remainingInstallments: 12, interestRate: 1.99, dueDate: 'Dia 15', status: 'Em dia' }
-    ],
-    transactions: [
-      { id: 'tx_1', type: 'RECEITA', description: 'Salário Mensal', category: 'Trabalho', subcategory: 'Salário', account: 'Banco Inter', date: '2026-07-05', amount: 4500.00, incomeType: 'Fixo', paymentMethod: 'PIX', obs: 'Salário ref. Julho' },
-      { id: 'tx_2', type: 'RECEITA', description: 'Projeto Freelance UX', category: 'Freelance', subcategory: 'Design', account: 'Nubank', date: '2026-07-12', amount: 700.00, incomeType: 'Variável', paymentMethod: 'PIX', obs: 'Projeto de prototipação' },
-      { id: 'tx_3', type: 'DESPESA', description: 'Aluguel do Apê', category: 'Moradia', subcategory: 'Aluguel', account: 'Nubank', date: '2026-07-10', amount: 1800.00, paymentMethod: 'Boleto', recurrence: 'Mensal', obs: 'Aluguel fixo' },
-      { id: 'tx_4', type: 'DESPESA', description: 'Compras de Mercado', category: 'Alimentação', subcategory: 'Supermercado', account: 'Nubank', date: '2026-07-14', amount: 950.00, paymentMethod: 'Cartão de Débito', obs: 'Feira mensal' },
-      { id: 'tx_5', type: 'DESPESA', description: 'Transporte por Aplicativo', category: 'Transporte', subcategory: 'Uber/99', account: 'Nubank', date: '2026-07-18', amount: 180.00, paymentMethod: 'Cartão de Crédito', obs: 'Viagens semanais' },
-      { id: 'tx_6', type: 'DESPESA', description: 'Farmácia e Vitaminas', category: 'Saúde', subcategory: 'Medicamentos', account: 'Banco Inter', date: '2026-07-19', amount: 120.00, paymentMethod: 'Cartão de Débito', obs: 'Remédios do mês' },
-      { id: 'tx_7', type: 'AJUSTE_SALDO', description: 'Rendimento da Reserva', category: 'Investimentos', account: 'Reserva de emergência', date: '2026-07-20', amount: 700.00, reason: 'Ajuste de rendimento CDB 100% CDI' }
-    ],
-    diary: [
-      { id: 'note_1', title: 'Aporte Mensal na Reserva', content: 'Planejar aporte adicional de pelo menos R$ 300 assim que entrar o bônus.', type: 'planejamento', date: '2026-07-20' },
-      { id: 'note_2', title: 'Gastos com iFood', content: 'Percebi que pedi comida 5 vezes esta semana. Meta: reduzir para no máximo 1x por semana.', type: 'reflexão', date: '2026-07-18' },
-      { id: 'note_3', title: 'Quitar Empréstimo', content: 'Objetivo de amortizar 3 parcelas do empréstimo Nubank até o fim do semestre.', type: 'meta', date: '2026-07-15' },
-      { id: 'note_4', title: 'Revisar Assinaturas', content: 'Cancelar streaming que não estou utilizando ativamente.', type: 'lembrete', date: '2026-07-10' }
-    ],
-    shopping: [
-      { id: 'shop_1', title: 'Arroz Integral 5kg', quantity: 1, estimatedPrice: 28.50, actualPrice: 27.00, priority: 'Alta', purchased: true, doNotBuyAgain: false, obs: 'Marca habitual' },
-      { id: 'shop_2', title: 'Azeite Extra Virgem', quantity: 2, estimatedPrice: 70.00, actualPrice: 65.00, priority: 'Média', purchased: true, doNotBuyAgain: false, obs: 'Em promoção no mercado' },
-      { id: 'shop_3', title: 'Detergente Neutro', quantity: 4, estimatedPrice: 12.00, actualPrice: 11.80, priority: 'Baixa', purchased: false, doNotBuyAgain: false, obs: 'Kit 4 unidades' },
-      { id: 'shop_4', title: 'Café Especial 500g', quantity: 1, estimatedPrice: 24.00, actualPrice: 24.00, priority: 'Média', purchased: false, doNotBuyAgain: false, obs: 'Grãos torrados' }
-    ],
-    alerts: [
-      { id: 'alt_1', title: 'Gasto com Transporte Elevado', message: 'Seus gastos com Uber este mês subiram 25% em relação ao mês anterior.', level: 'atenção', date: '2026-07-22', read: false },
-      { id: 'alt_2', title: 'Vencimento de Dívida Próximo', message: 'A parcela do empréstimo Nubank vence no dia 15.', level: 'atenção', date: '2026-07-21', read: false },
-      { id: 'alt_3', title: 'Reserva de Emergência Operacional', message: 'Sua reserva atingiu 100% da meta de segurança recomendada para 3 meses.', level: 'positivo', date: '2026-07-20', read: true },
-      { id: 'alt_4', title: 'Comprometimento de Renda Elevado', message: 'Suas despesas fixas atingiram 68% da sua renda mensal.', level: 'risco', date: '2026-07-19', read: false }
-    ],
-    recommendations: [
-      { id: 'rec_1', title: 'Reservar R$ 200 no Próximo Mês', description: 'Automatizar uma transferência de R$ 200 para a Reserva de Emergência no dia do pagamento.', priority: 'Alta', origin: 'FinGuardian AI Core', accepted: false },
-      { id: 'rec_2', title: 'Reduzir Alimentação Fora de Casa', description: 'Diminuir gastos com restaurantes de R$ 950 para R$ 700 mensais economizará R$ 3.000 ao ano.', priority: 'Média', origin: 'Análise de Padrão de Gastos', accepted: false },
-      { id: 'rec_3', title: 'Renegociar Empréstimo Ativo', description: 'Verifique taxas de portabilidade de crédito para amortizar os juros de 1.99% a.m.', priority: 'Alta', origin: 'Módulo de Dívidas', accepted: false }
-    ],
-    analysisHistory: []
+    accounts: [],
+    debts: [],
+    transactions: [],
+    diary: [],
+    shopping: [],
+    alerts: [],
+    recommendations: [],
+    analysisHistory: [],
+    deletedAnalyses: []
   };
 
   // --- Gerenciador de Armazenamento Local ---
@@ -111,15 +79,15 @@
       // Inicialização sem forçar dados mock para novos usuários
     },
     resetAll: function () {
-      localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(INITIAL_DEMO_DATA.user));
-      localStorage.setItem(STORAGE_KEYS.ACCOUNTS, JSON.stringify(INITIAL_DEMO_DATA.accounts));
-      localStorage.setItem(STORAGE_KEYS.TRANSACTIONS, JSON.stringify(INITIAL_DEMO_DATA.transactions));
-      localStorage.setItem(STORAGE_KEYS.DEBTS, JSON.stringify(INITIAL_DEMO_DATA.debts));
-      localStorage.setItem(STORAGE_KEYS.DIARY, JSON.stringify(INITIAL_DEMO_DATA.diary));
-      localStorage.setItem(STORAGE_KEYS.SHOPPING, JSON.stringify(INITIAL_DEMO_DATA.shopping));
-      localStorage.setItem(STORAGE_KEYS.ALERTS, JSON.stringify(INITIAL_DEMO_DATA.alerts));
-      localStorage.setItem(STORAGE_KEYS.RECOMMENDATIONS, JSON.stringify(INITIAL_DEMO_DATA.recommendations));
-      localStorage.setItem(STORAGE_KEYS.ANALYSIS_HISTORY, JSON.stringify(INITIAL_DEMO_DATA.analysisHistory));
+      localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(DEFAULT_INITIAL_STATE.user));
+      localStorage.setItem(STORAGE_KEYS.ACCOUNTS, JSON.stringify([]));
+      localStorage.setItem(STORAGE_KEYS.TRANSACTIONS, JSON.stringify([]));
+      localStorage.setItem(STORAGE_KEYS.DEBTS, JSON.stringify([]));
+      localStorage.setItem(STORAGE_KEYS.DIARY, JSON.stringify([]));
+      localStorage.setItem(STORAGE_KEYS.SHOPPING, JSON.stringify([]));
+      localStorage.setItem(STORAGE_KEYS.ALERTS, JSON.stringify([]));
+      localStorage.setItem(STORAGE_KEYS.RECOMMENDATIONS, JSON.stringify([]));
+      localStorage.setItem(STORAGE_KEYS.ANALYSIS_HISTORY, JSON.stringify([]));
       localStorage.setItem(STORAGE_KEYS.DELETED_ANALYSES, JSON.stringify([]));
     }
   };
@@ -153,28 +121,8 @@
     pendingAiSuggestion: null,
 
     reload: function () {
-      this.user = StorageService.get(STORAGE_KEYS.USER);
+      this.user = StorageService.get(STORAGE_KEYS.USER) || { ...DEFAULT_INITIAL_STATE.user };
       this.accounts = StorageService.get(STORAGE_KEYS.ACCOUNTS) || [];
-      
-      // Garante uma conta padrão ativa (com saldo 0) para o usuário recém-criado
-      if (!this.accounts || this.accounts.length === 0) {
-        this.accounts = [
-          {
-            id: 'acc_default',
-            name: 'Carteira Principal',
-            institution: 'Carteira',
-            type: 'conta corrente',
-            currency: 'BRL',
-            balance: 0.00,
-            initialBalance: 0.00,
-            creditLimit: 0.00,
-            overdraftLimit: 0.00,
-            status: 'Ativa'
-          }
-        ];
-        StorageService.set(STORAGE_KEYS.ACCOUNTS, this.accounts);
-      }
-
       this.transactions = StorageService.get(STORAGE_KEYS.TRANSACTIONS) || [];
       let financialValuesUpdated = false;
       this.accounts.forEach(account => {
@@ -887,8 +835,242 @@
     }
   };
 
-  // --- Atualização local do protótipo ---
-  // Mantém telas e localStorage sincronizados até a integração com a API.
+  // --- Sincronização Completa com a API REST Spring Boot ---
+  async function syncAllDataFromBackend() {
+    if (!window.ApiService || !ApiService.isAuthenticated()) {
+      return false;
+    }
+
+    try {
+      // 1. Obter Perfil do Usuário (GET /usuarios/me)
+      const perfil = await ApiService.usuario.getPerfil();
+      if (perfil && perfil.id) {
+        State.user = {
+          ...(State.user || {}),
+          id: perfil.id,
+          name: perfil.nome || State.user?.name || 'Usuário',
+          email: perfil.email || State.user?.email || '',
+          dataCadastro: perfil.dataCadastro || State.user?.dataCadastro || null,
+          monthlyIncome: State.user?.monthlyIncome || 0,
+          profileStatus: State.user?.profileStatus || 'SAUDÁVEL',
+          confidenceScore: State.user?.confidenceScore || 100
+        };
+        StorageService.set(STORAGE_KEYS.USER, State.user);
+      }
+
+      // 2. Buscar Contas, Dívidas, Movimentações, Diário, Lista de Compras, Recomendações e Dashboard
+      const [contasRes, dividasRes, movsRes, receitasRes, despesasRes, diarioRes, comprasRes, recsRes, dashRes] = await Promise.allSettled([
+        ApiService.contas.listar(),
+        ApiService.dividas.listar(),
+        ApiService.movimentacoes.listar(),
+        ApiService.request('/receitas', { method: 'GET' }),
+        ApiService.request('/despesas', { method: 'GET' }),
+        ApiService.request('/diario', { method: 'GET' }),
+        ApiService.request('/lista-compras', { method: 'GET' }),
+        ApiService.request('/recomendacoes', { method: 'GET' }),
+        ApiService.request('/dashboard', { method: 'GET' })
+      ]);
+
+      // Sincronizar Contas Bancárias
+      if (contasRes.status === 'fulfilled' && Array.isArray(contasRes.value)) {
+        State.accounts = contasRes.value.map(c => ({
+          id: c.id,
+          name: c.nome,
+          institution: c.instituicao,
+          type: c.tipo,
+          currency: c.moeda || 'BRL',
+          balance: NumberParser.value(c.saldo),
+          creditLimit: NumberParser.value(c.limiteCredito),
+          overdraftLimit: NumberParser.value(c.limiteChequeEspecial),
+          status: c.status || 'Ativa'
+        }));
+        StorageService.set(STORAGE_KEYS.ACCOUNTS, State.accounts);
+      }
+
+      // Sincronizar Dívidas e Empréstimos
+      if (dividasRes.status === 'fulfilled' && Array.isArray(dividasRes.value)) {
+        State.debts = dividasRes.value.map(d => ({
+          id: d.id,
+          description: d.descricao,
+          originalAmount: NumberParser.value(d.valorOriginal),
+          remainingBalance: NumberParser.value(d.saldoDevedor),
+          installmentValue: NumberParser.value(d.valorParcela),
+          remainingInstallments: d.parcelasRestantes,
+          interestRate: NumberParser.value(d.taxaJuros),
+          dueDate: d.dataVencimento,
+          status: d.status || 'Em dia'
+        }));
+        StorageService.set(STORAGE_KEYS.DEBTS, State.debts);
+      }
+
+      // Sincronizar Movimentações Financeiras
+      const defaultAccountName = State.accounts[0]?.name || 'Carteira Principal';
+      if (movsRes.status === 'fulfilled' && Array.isArray(movsRes.value) && movsRes.value.length > 0) {
+        State.transactions = movsRes.value.map(m => ({
+          id: m.id,
+          backendId: m.id,
+          type: m.tipo,
+          description: m.descricao,
+          amount: NumberParser.value(m.valor),
+          date: m.data,
+          category: m.categoria || 'Geral',
+          subcategory: m.subcategoria || '',
+          account: m.contaOrigemNome || defaultAccountName,
+          destinationAccount: m.contaDestinoNome || '',
+          paymentMethod: m.formaPagamento || 'PIX',
+          recurrence: m.recorrencia || 'Única',
+          obs: m.observacoes || '',
+          realBalance: m.saldoReal,
+          reason: m.motivoAjuste,
+          origemIA: Boolean(m.origemIA),
+          createdAt: m.criadoEm || (m.data ? `${m.data}T00:00:00` : new Date().toISOString())
+        })).sort((a, b) => (b.date || '').localeCompare(a.date || '') || String(b.id).localeCompare(String(a.id)));
+      } else {
+        const receitas = receitasRes.status === 'fulfilled' && Array.isArray(receitasRes.value) ? receitasRes.value : [];
+        const despesas = despesasRes.status === 'fulfilled' && Array.isArray(despesasRes.value) ? despesasRes.value : [];
+
+        const txReceitas = receitas.map(r => ({
+          id: r.id,
+          backendId: r.id,
+          type: 'RECEITA',
+          description: r.descricao,
+          amount: NumberParser.value(r.valor),
+          date: r.data,
+          category: 'Receita',
+          account: defaultAccountName,
+          paymentMethod: 'PIX',
+          createdAt: r.data ? `${r.data}T00:00:00` : new Date().toISOString()
+        }));
+
+        const txDespesas = despesas.map(d => ({
+          id: d.id,
+          backendId: d.id,
+          type: 'DESPESA',
+          description: d.descricao,
+          amount: NumberParser.value(d.valor),
+          date: d.data,
+          category: d.categoriaNome || 'Geral',
+          account: defaultAccountName,
+          paymentMethod: 'Débito/Outros',
+          origemIA: Boolean(d.origemIA),
+          createdAt: d.criadoEm || (d.data ? `${d.data}T00:00:00` : new Date().toISOString())
+        }));
+
+        State.transactions = [...txReceitas, ...txDespesas].sort((a, b) => {
+          return (b.date || '').localeCompare(a.date || '') || String(b.id).localeCompare(String(a.id));
+        });
+      }
+      StorageService.set(STORAGE_KEYS.TRANSACTIONS, State.transactions);
+
+      // Sincronizar Diário Financeiro
+      if (diarioRes.status === 'fulfilled' && Array.isArray(diarioRes.value)) {
+        State.diary = diarioRes.value.map(n => ({
+          id: n.id,
+          title: n.titulo,
+          content: n.conteudo,
+          type: (n.tipo || 'anotacao').toLowerCase(),
+          date: n.data
+        }));
+        StorageService.set(STORAGE_KEYS.DIARY, State.diary);
+      }
+
+      // Sincronizar Lista de Compras
+      if (comprasRes.status === 'fulfilled' && Array.isArray(comprasRes.value)) {
+        State.shopping = comprasRes.value.map(item => ({
+          id: item.id,
+          title: item.nome,
+          quantity: item.quantidade || 1,
+          estimatedPrice: NumberParser.value(item.precoEstimado),
+          actualPrice: NumberParser.value(item.precoPago),
+          priority: item.prioridade || 'Média',
+          purchased: Boolean(item.comprado),
+          doNotBuyAgain: Boolean(item.naoComprarNovamente),
+          obs: item.observacao || '',
+          date: item.data
+        }));
+        StorageService.set(STORAGE_KEYS.SHOPPING, State.shopping);
+      }
+
+      // Sincronizar Recomendações
+      if (recsRes.status === 'fulfilled' && Array.isArray(recsRes.value)) {
+        State.recommendations = recsRes.value.map(r => ({
+          id: r.id,
+          title: r.categoriaRelacionada ? `Recomendação (${r.categoriaRelacionada})` : 'Recomendação FinGuardian AI',
+          description: r.conteudo,
+          priority: r.prioridade || 'Média',
+          origin: 'FinGuardian AI',
+          accepted: false
+        }));
+        StorageService.set(STORAGE_KEYS.RECOMMENDATIONS, State.recommendations);
+      }
+
+      // Sincronizar Dashboard
+      if (dashRes.status === 'fulfilled' && dashRes.value) {
+        const d = dashRes.value;
+        if (d.perfilFinanceiro?.tipo) {
+          State.user.profileStatus = d.perfilFinanceiro.tipo;
+        }
+        if (d.totalReceitas && (!State.user.monthlyIncome || State.user.monthlyIncome === 0)) {
+          State.user.monthlyIncome = NumberParser.value(d.totalReceitas);
+        }
+        StorageService.set(STORAGE_KEYS.USER, State.user);
+      }
+
+      // Gerar alertas contextuais baseados nos dados reais
+      generateContextualAlerts();
+
+      return true;
+    } catch (err) {
+      console.error('[FinGuardian Sync] Erro ao sincronizar dados com backend:', err);
+      throw err;
+    }
+  }
+
+  function generateContextualAlerts() {
+    const alerts = [];
+    const today = new Date().toISOString().split('T')[0];
+
+    const totalExpense = State.transactions.filter(t => t.type === 'DESPESA').reduce((acc, t) => acc + NumberParser.value(t.amount), 0);
+    const totalIncome = State.transactions.filter(t => t.type === 'RECEITA').reduce((acc, t) => acc + NumberParser.value(t.amount), 0);
+    const totalBalance = State.accounts.reduce((acc, a) => acc + NumberParser.value(a.balance), 0);
+    const totalDebt = State.debts.reduce((acc, d) => acc + NumberParser.value(d.remainingBalance), 0);
+
+    if (totalDebt > 0) {
+      alerts.push({
+        id: 'alt_debt_' + Date.now(),
+        title: 'Compromissos de Dívidas Ativos',
+        message: `Você possui ${Formatters.currency(totalDebt)} em saldo devedor distribuído em suas dívidas ativas.`,
+        level: 'atenção',
+        date: today,
+        read: false
+      });
+    }
+
+    if (totalIncome > 0 && totalExpense > totalIncome * 0.7) {
+      alerts.push({
+        id: 'alt_exp_' + Date.now(),
+        title: 'Comprometimento de Renda Elevado',
+        message: `Suas despesas registradas atingiram ${Math.round((totalExpense / totalIncome) * 100)}% das suas receitas do período.`,
+        level: 'risco',
+        date: today,
+        read: false
+      });
+    } else if (totalBalance > 0) {
+      alerts.push({
+        id: 'alt_pos_' + Date.now(),
+        title: 'Saldo Consolidado Positivo',
+        message: `Seu saldo total em contas é de ${Formatters.currency(totalBalance)}. Mantenha sua meta de reserva financeira.`,
+        level: 'positivo',
+        date: today,
+        read: true
+      });
+    }
+
+    State.alerts = alerts;
+    StorageService.set(STORAGE_KEYS.ALERTS, State.alerts);
+  }
+
+  // --- Gerenciador Financeiro Integrado ---
   const FinancialStore = {
     today: function () {
       return new Date().toISOString().split('T')[0];
@@ -967,7 +1149,7 @@
       return true;
     },
 
-    registerTransaction: function (transaction) {
+    registerTransaction: async function (transaction) {
       const amount = NumberParser.value(transaction.amount);
       const isBalanceAdjustment = transaction.type === 'AJUSTE_SALDO';
       const realBalance = NumberParser.value(transaction.realBalance);
@@ -979,6 +1161,39 @@
       if (isBalanceAdjustment && !Number.isFinite(realBalance)) {
         Toast.show('Informe o saldo real conferido.', 'warning');
         return false;
+      }
+
+      // Persistir no backend Spring Boot via POST /movimentacoes
+      if (window.ApiService && ApiService.isAuthenticated()) {
+        try {
+          const created = await ApiService.movimentacoes.criar({
+            tipo: transaction.type,
+            descricao: transaction.description,
+            valor: amount,
+            data: transaction.date || this.today(),
+            categoria: transaction.category,
+            subcategoria: transaction.subcategory,
+            contaOrigemNome: transaction.account,
+            contaDestinoNome: transaction.destinationAccount,
+            formaPagamento: transaction.paymentMethod,
+            recorrencia: transaction.recurrence || 'Única',
+            observacoes: transaction.obs,
+            saldoReal: isBalanceAdjustment ? realBalance : undefined,
+            motivoAjuste: transaction.reason,
+            origemIA: Boolean(transaction.origin === 'CONVERSA_IA' || transaction.origemIA)
+          });
+          if (created && created.id) {
+            transaction.id = created.id;
+            transaction.backendId = created.id;
+            if (created.categoria) {
+              transaction.category = created.categoria;
+            }
+          }
+        } catch (apiErr) {
+          console.error('[FinGuardian Backend Movimentação] Erro ao registrar:', apiErr);
+          Toast.show(apiErr.message || 'Erro ao registrar movimentação no servidor.', 'error');
+          return false;
+        }
       }
 
       // Se a conta não foi informada ou não existe, usa a primeira conta ativa ou Carteira Principal
@@ -1031,12 +1246,22 @@
       if (isBalanceAdjustment) transaction.realBalance = realBalance;
       transaction.createdAt = transaction.createdAt || new Date().toISOString();
       if (!this.applyTransactionEffect(transaction, 1)) return false;
-      State.transactions.push(transaction);
+      State.transactions.unshift(transaction);
       this.refresh();
       return true;
     },
 
-    deleteTransaction: function (transaction) {
+    deleteTransaction: async function (transaction) {
+      if (window.ApiService && ApiService.isAuthenticated() && !String(transaction.id).startsWith('tx_')) {
+        try {
+          await ApiService.movimentacoes.excluir(transaction.id);
+        } catch (apiErr) {
+          console.error('[FinGuardian Excluir Movimentação] Erro no backend:', apiErr);
+          Toast.show(apiErr.message || 'Erro ao excluir movimentação no servidor.', 'error');
+          return false;
+        }
+      }
+
       if (!this.applyTransactionEffect(transaction, -1)) {
         Toast.show('Não foi possível desfazer o efeito desta movimentação no saldo.', 'warning');
         return false;
@@ -1046,7 +1271,28 @@
       return true;
     },
 
-    updateTransaction: function (transaction, changes) {
+    updateTransaction: async function (transaction, changes) {
+      if (window.ApiService && ApiService.isAuthenticated() && !String(transaction.id).startsWith('tx_')) {
+        try {
+          await ApiService.movimentacoes.atualizar(transaction.id, {
+            tipo: changes.type || transaction.type,
+            descricao: changes.description || transaction.description,
+            valor: NumberParser.value(changes.amount !== undefined ? changes.amount : transaction.amount),
+            data: changes.date || transaction.date,
+            categoria: changes.category !== undefined ? changes.category : transaction.category,
+            subcategoria: changes.subcategory !== undefined ? changes.subcategory : transaction.subcategory,
+            contaOrigemNome: changes.account || transaction.account,
+            formaPagamento: changes.paymentMethod !== undefined ? changes.paymentMethod : transaction.paymentMethod,
+            recorrencia: changes.recurrence || transaction.recurrence,
+            observacoes: changes.obs !== undefined ? changes.obs : transaction.obs
+          });
+        } catch (apiErr) {
+          console.error('[FinGuardian Atualizar Movimentação] Erro no backend:', apiErr);
+          Toast.show(apiErr.message || 'Erro ao atualizar movimentação no servidor.', 'error');
+          return false;
+        }
+      }
+
       const previous = { ...transaction };
       if (!this.applyTransactionEffect(previous, -1)) {
         Toast.show('Não foi possível recalcular o saldo anterior.', 'warning');
@@ -1212,21 +1458,33 @@
       });
     });
 
-    document.getElementById('btn-fin-analyze')?.addEventListener('click', function () {
+    document.getElementById('btn-fin-analyze')?.addEventListener('click', async function () {
       const text = document.getElementById('fin-prompt-input').value.trim();
       if (!text) {
         Toast.show('Conte ao Fin qual movimentação deseja registrar.', 'warning');
         document.getElementById('fin-prompt-input').focus();
         return;
       }
-      showReviewStep(AiEngine.analyzePrompt(text));
+      let suggestion = null;
+      if (window.ApiService && ApiService.isAuthenticated()) {
+        try {
+          const iaResponse = await ApiService.ia.processarTexto({ texto: text });
+          suggestion = AiEngine.fromApiResponse(iaResponse, text);
+        } catch (iaErr) {
+          console.warn('[FinGuardian IA Fin] Backend IA:', iaErr);
+        }
+      }
+      if (!suggestion) {
+        suggestion = AiEngine.analyzePrompt(text);
+      }
+      showReviewStep(suggestion);
     });
 
     document.getElementById('btn-fin-back')?.addEventListener('click', function () {
       showPromptStep(false);
     });
 
-    document.getElementById('btn-fin-save')?.addEventListener('click', function () {
+    document.getElementById('btn-fin-save')?.addEventListener('click', async function () {
       const description = document.getElementById('fin-description').value.trim();
       const amount = parseFloat(document.getElementById('fin-amount').value);
       const category = document.getElementById('fin-category').value.trim();
@@ -1249,7 +1507,8 @@
         origin: 'CONVERSA_IA'
       };
 
-      if (!FinancialStore.registerTransaction(newTx)) return;
+      const saved = await FinancialStore.registerTransaction(newTx);
+      if (!saved) return;
       finModal.classList.remove('active');
       showPromptStep(true);
       Toast.show('Movimentação salva com o Fin!');
@@ -1292,63 +1551,13 @@
             const authData = await ApiService.auth.login({ email, senha: password });
             ApiService.setToken(authData.token, authData.tipo, authData.expiraEm);
 
-            // 2. Buscar dados reais do perfil (GET /usuarios/me)
-            const perfil = await ApiService.usuario.getPerfil();
-
-            // 3. Atualizar estado com os dados do usuário autenticado
-            State.user = {
-              ...(State.user || {}),
-              id: perfil.id,
-              name: perfil.nome,
-              email: perfil.email,
-              dataCadastro: perfil.dataCadastro,
-              monthlyIncome: State.user?.monthlyIncome || 4500.00,
-              profileStatus: State.user?.profileStatus || 'EM OBSERVAÇÃO',
-              confidenceScore: State.user?.confidenceScore || 82
-            };
-            StorageService.set(STORAGE_KEYS.USER, State.user);
-
-            // 4. Carregar contas e dívidas do banco de dados
-            try {
-              const contas = await ApiService.contas.listar();
-              if (Array.isArray(contas)) {
-                State.accounts = contas.map(c => ({
-                  id: c.id,
-                  name: c.nome,
-                  institution: c.instituicao,
-                  type: c.tipo,
-                  currency: c.moeda || 'BRL',
-                  balance: NumberParser.value(c.saldo),
-                  creditLimit: NumberParser.value(c.limiteCredito),
-                  overdraftLimit: NumberParser.value(c.limiteChequeEspecial),
-                  status: c.status || 'Ativa'
-                }));
-                StorageService.set(STORAGE_KEYS.ACCOUNTS, State.accounts);
-              }
-
-              const dividas = await ApiService.dividas.listar();
-              if (Array.isArray(dividas)) {
-                State.debts = dividas.map(d => ({
-                  id: d.id,
-                  description: d.descricao,
-                  originalAmount: NumberParser.value(d.valorOriginal),
-                  remainingBalance: NumberParser.value(d.saldoDevedor),
-                  installmentValue: NumberParser.value(d.valorParcela),
-                  remainingInstallments: d.parcelasRestantes,
-                  interestRate: NumberParser.value(d.taxaJuros),
-                  dueDate: d.dataVencimento,
-                  status: d.status || 'Em dia'
-                }));
-                StorageService.set(STORAGE_KEYS.DEBTS, State.debts);
-              }
-            } catch (syncErr) {
-              console.warn('[FinGuardian Sync] Erro ao sincronizar contas/dívidas:', syncErr);
-            }
+            // 2. Carregar todos os dados reais do backend
+            await syncAllDataFromBackend();
           } else {
             StorageService.set(STORAGE_KEYS.AUTH, 'demo_token_authenticated');
           }
 
-          // 5. Exibir o aplicativo principal
+          // 3. Exibir o aplicativo principal
           document.getElementById('auth-layout').style.display = 'none';
           document.getElementById('main-app-layout').style.display = 'flex';
           document.getElementById('floating-ai-button')?.classList.remove('is-hidden');
@@ -1423,43 +1632,14 @@
             const authData = await ApiService.auth.login({ email, senha: password });
             ApiService.setToken(authData.token, authData.tipo, authData.expiraEm);
 
-            // 3. Buscar perfil completo no backend (GET /usuarios/me)
-            const perfil = await ApiService.usuario.getPerfil();
-
-            State.user = {
-              ...(State.user || {}),
-              id: perfil.id,
-              name: perfil.nome,
-              email: perfil.email,
-              dataCadastro: perfil.dataCadastro,
-              monthlyIncome: 4500.00,
-              profileStatus: 'EM OBSERVAÇÃO',
-              confidenceScore: 82
-            };
-
-            // 4. Carregar contas do backend
-            try {
-              const contas = await ApiService.contas.listar();
-              if (Array.isArray(contas)) {
-                State.accounts = contas.map(c => ({
-                  id: c.id,
-                  name: c.nome,
-                  institution: c.instituicao,
-                  type: c.tipo,
-                  currency: c.moeda || 'BRL',
-                  balance: NumberParser.value(c.saldo),
-                  creditLimit: NumberParser.value(c.limiteCredito),
-                  overdraftLimit: NumberParser.value(c.limiteChequeEspecial),
-                  status: c.status || 'Ativa'
-                }));
-                StorageService.set(STORAGE_KEYS.ACCOUNTS, State.accounts);
-              }
-            } catch (err) {
-              console.warn('[FinGuardian Contas] Erro:', err);
-            }
+            // 3. Sincronizar todos os dados com o backend
+            await syncAllDataFromBackend();
           } else {
-            State.user.name = name;
-            State.user.email = email;
+            State.user = {
+              ...DEFAULT_INITIAL_STATE.user,
+              name,
+              email
+            };
           }
 
           StorageService.set(STORAGE_KEYS.USER, State.user);
@@ -1469,7 +1649,7 @@
             acceptedAt: new Date().toISOString()
           });
 
-          // 5. Exibir o aplicativo principal
+          // 4. Exibir o aplicativo principal
           document.getElementById('auth-layout').style.display = 'none';
           document.getElementById('main-app-layout').style.display = 'flex';
           document.getElementById('floating-ai-button')?.classList.remove('is-hidden');
@@ -1587,7 +1767,7 @@
 
     const btnConfirmAiSave = document.getElementById('btn-confirm-ai-save');
     if (btnConfirmAiSave) {
-      btnConfirmAiSave.addEventListener('click', function () {
+      btnConfirmAiSave.addEventListener('click', async function () {
         const newTx = {
           id: 'tx_' + Date.now(),
           type: document.getElementById('ai-rev-type').value,
@@ -1599,8 +1779,9 @@
           date: new Date().toISOString().split('T')[0]
         };
 
-        if (!FinancialStore.registerTransaction(newTx)) return;
-        document.getElementById('modal-ai-review').classList.remove('active');
+        const saved = await FinancialStore.registerTransaction(newTx);
+        if (!saved) return;
+        document.getElementById('modal-ai-review')?.classList.remove('active');
         document.getElementById('ai-prompt-input').value = '';
         Toast.show('Movimentação revisada e salva com sucesso!');
       });
@@ -1611,7 +1792,7 @@
     const toggleManualFields = () => { const type = document.getElementById('manual-tx-type')?.value; document.getElementById('manual-transfer-fields')?.classList.toggle('active', type === 'TRANSFERENCIA'); document.getElementById('manual-adjustment-fields')?.classList.toggle('active', type === 'AJUSTE_SALDO'); };
     document.getElementById('manual-tx-type')?.addEventListener('change', toggleManualFields); toggleManualFields();
     if (manualTxForm) {
-      manualTxForm.addEventListener('submit', function (e) {
+      manualTxForm.addEventListener('submit', async function (e) {
         e.preventDefault();
         const newTx = {
           id: 'tx_' + Date.now(),
@@ -1630,7 +1811,8 @@
         if (newTx.type === 'TRANSFERENCIA') { newTx.destinationAccount = document.getElementById('manual-tx-destination')?.value; if (!newTx.destinationAccount || newTx.destinationAccount === newTx.account) { Toast.show('Escolha uma conta de destino diferente.', 'warning'); return; } }
         if (newTx.type === 'AJUSTE_SALDO') { newTx.reason = document.getElementById('manual-tx-adjustment-reason')?.value; newTx.realBalance = parseFloat(document.getElementById('manual-tx-real-balance')?.value) || 0; if (!newTx.reason) { Toast.show('Informe o motivo do ajuste.', 'warning'); return; } }
 
-        if (!FinancialStore.registerTransaction(newTx)) return;
+        const saved = await FinancialStore.registerTransaction(newTx);
+        if (!saved) return;
         manualTxForm.reset();
         Toast.show('Movimentação salva com sucesso!');
         Router.navigate('movimentacoes');
@@ -1837,36 +2019,82 @@
 
     const btnConfirmConvertShopping = document.getElementById('btn-confirm-convert-shopping');
     if (btnConfirmConvertShopping) {
-      btnConfirmConvertShopping.addEventListener('click', function () {
+      btnConfirmConvertShopping.addEventListener('click', async function () {
         const targetAccount = document.getElementById('convert-shopping-account-select').value;
         const purchasedItems = State.shopping.filter(i => i.purchased && !i.doNotBuyAgain);
         const totalCost = purchasedItems.reduce((acc, item) => acc + (item.actualPrice || item.estimatedPrice) * (item.quantity || 1), 0);
 
-        const newExpense = {
-          id: 'tx_' + Date.now(),
-          type: 'DESPESA',
-          description: 'Compras de Mercado (Lista de Compras)',
-          category: 'Alimentação',
-          account: targetAccount,
-          amount: totalCost,
-          date: new Date().toISOString().split('T')[0],
-          createdAt: new Date().toISOString(),
-          paymentMethod: 'Cartão de Débito',
-          obs: `Convertido de ${purchasedItems.length} itens.`
-        };
+        if (window.ApiService && ApiService.isAuthenticated()) {
+          try {
+            await ApiService.request('/lista-compras/lancar-pagos', { method: 'POST' });
+            // Recarrega transações e lista de compras atualizadas do backend
+            const [despesasRes, comprasRes] = await Promise.allSettled([
+              ApiService.request('/despesas', { method: 'GET' }),
+              ApiService.request('/lista-compras', { method: 'GET' })
+            ]);
+            if (despesasRes.status === 'fulfilled' && Array.isArray(despesasRes.value)) {
+              const defaultAccountName = State.accounts[0]?.name || 'Carteira Principal';
+              const txDespesas = despesasRes.value.map(d => ({
+                id: d.id,
+                backendId: d.id,
+                type: 'DESPESA',
+                description: d.descricao,
+                amount: NumberParser.value(d.valor),
+                date: d.data,
+                category: d.categoriaNome || 'Geral',
+                account: defaultAccountName,
+                paymentMethod: 'Débito/Outros',
+                origemIA: Boolean(d.origemIA),
+                createdAt: d.criadoEm || (d.data ? `${d.data}T00:00:00` : new Date().toISOString())
+              }));
+              const txReceitas = State.transactions.filter(t => t.type === 'RECEITA');
+              State.transactions = [...txReceitas, ...txDespesas].sort((a, b) => (b.date || '').localeCompare(a.date || '') || String(b.id).localeCompare(String(a.id)));
+              StorageService.set(STORAGE_KEYS.TRANSACTIONS, State.transactions);
+            }
+            if (comprasRes.status === 'fulfilled' && Array.isArray(comprasRes.value)) {
+              State.shopping = comprasRes.value.map(item => ({
+                id: item.id,
+                title: item.nome,
+                quantity: item.quantidade || 1,
+                estimatedPrice: NumberParser.value(item.precoEstimado),
+                actualPrice: NumberParser.value(item.precoPago),
+                priority: item.prioridade || 'Média',
+                purchased: Boolean(item.comprado),
+                doNotBuyAgain: Boolean(item.naoComprarNovamente),
+                obs: item.observacao || '',
+                date: item.data
+              }));
+              StorageService.set(STORAGE_KEYS.SHOPPING, State.shopping);
+            }
+          } catch (apiErr) {
+            console.error('[FinGuardian Lançar Pagos] Erro:', apiErr);
+            Toast.show(apiErr.message || 'Erro ao lançar itens pagos no backend.', 'error');
+            return;
+          }
+        } else {
+          const newExpense = {
+            id: 'tx_' + Date.now(),
+            type: 'DESPESA',
+            description: 'Compras de Mercado (Lista de Compras)',
+            category: 'Alimentação',
+            account: targetAccount,
+            amount: totalCost,
+            date: new Date().toISOString().split('T')[0],
+            createdAt: new Date().toISOString(),
+            paymentMethod: 'Cartão de Débito',
+            obs: `Convertido de ${purchasedItems.length} itens.`
+          };
 
-        State.transactions.push(newExpense);
-
-        const acc = State.accounts.find(a => a.name === targetAccount);
-        if (acc) {
-          acc.balance -= totalCost;
-          StorageService.set(STORAGE_KEYS.ACCOUNTS, State.accounts);
+          State.transactions.push(newExpense);
+          const acc = State.accounts.find(a => a.name === targetAccount);
+          if (acc) {
+            acc.balance -= totalCost;
+            StorageService.set(STORAGE_KEYS.ACCOUNTS, State.accounts);
+          }
+          State.shopping = State.shopping.filter(i => !i.purchased || i.doNotBuyAgain);
+          StorageService.set(STORAGE_KEYS.TRANSACTIONS, State.transactions);
+          StorageService.set(STORAGE_KEYS.SHOPPING, State.shopping);
         }
-
-        State.shopping = State.shopping.filter(i => !i.purchased || i.doNotBuyAgain);
-
-        StorageService.set(STORAGE_KEYS.TRANSACTIONS, State.transactions);
-        StorageService.set(STORAGE_KEYS.SHOPPING, State.shopping);
 
         document.getElementById('modal-convert-shopping').classList.remove('active');
         Render.all();
@@ -1874,21 +2102,56 @@
       });
     }
 
-    document.addEventListener('change', function (e) {
+    document.addEventListener('change', async function (e) {
       if (e.target.classList.contains('toggle-purchased-check')) {
         const id = e.target.dataset.id;
-        const item = State.shopping.find(i => i.id === id);
+        const item = State.shopping.find(i => String(i.id) === String(id));
         if (item) {
           item.purchased = e.target.checked;
+          if (window.ApiService && ApiService.isAuthenticated() && !String(item.id).startsWith('shop_')) {
+            try {
+              await ApiService.request(`/lista-compras/${item.id}`, {
+                method: 'PUT',
+                body: JSON.stringify({
+                  nome: item.title,
+                  quantidade: item.quantity,
+                  precoEstimado: item.estimatedPrice,
+                  precoPago: item.actualPrice,
+                  prioridade: item.priority,
+                  comprado: item.purchased,
+                  naoComprarNovamente: item.doNotBuyAgain,
+                  observacao: item.obs,
+                  data: item.date
+                })
+              });
+            } catch (err) {
+              console.warn('[FinGuardian Shopping Check] Erro ao salvar estado no backend:', err);
+            }
+          }
           StorageService.set(STORAGE_KEYS.SHOPPING, State.shopping);
           Render.shopping();
         }
       }
       if (e.target.id === 'profile-alert-toggle') { const prefs = StorageService.get(STORAGE_KEYS.PREFERENCES) || {}; prefs.notifications = e.target.checked; StorageService.set(STORAGE_KEYS.PREFERENCES, prefs); }
     });
-    document.addEventListener('click', function (e) {
+    document.addEventListener('click', async function (e) {
       const deleteButton = e.target.closest('.delete-shopping-item');
-      if (deleteButton) { State.shopping = State.shopping.filter(item => item.id !== deleteButton.dataset.id); StorageService.set(STORAGE_KEYS.SHOPPING, State.shopping); Render.all(); Toast.show('Item removido da lista.'); }
+      if (deleteButton) {
+        const itemId = deleteButton.dataset.id;
+        if (window.ApiService && ApiService.isAuthenticated() && !String(itemId).startsWith('shop_')) {
+          try {
+            await ApiService.request(`/lista-compras/${itemId}`, { method: 'DELETE' });
+          } catch (err) {
+            console.error('[FinGuardian Excluir Item Compra] Erro no backend:', err);
+            Toast.show(err.message || 'Erro ao remover item do servidor.', 'error');
+            return;
+          }
+        }
+        State.shopping = State.shopping.filter(item => String(item.id) !== String(itemId));
+        StorageService.set(STORAGE_KEYS.SHOPPING, State.shopping);
+        Render.all();
+        Toast.show('Item removido da lista.');
+      }
     });
     document.getElementById('btn-clear-shopping')?.addEventListener('click', function () {
       if (confirm('Limpar todos os itens da lista?')) { State.shopping = []; StorageService.set(STORAGE_KEYS.SHOPPING, State.shopping); Render.all(); Toast.show('Lista limpa.'); }
@@ -1971,8 +2234,11 @@
         document.getElementById('transaction-edit-form').style.display = txButton.dataset.txAction === 'edit' ? 'block' : 'none'; document.getElementById('btn-save-edit-transaction').style.display = txButton.dataset.txAction === 'edit' ? 'inline-flex' : 'none'; document.getElementById('btn-start-edit-transaction').style.display = txButton.dataset.txAction === 'edit' ? 'none' : 'inline-flex';
         if (txButton.dataset.txAction === 'delete') {
           modal.classList.remove('active');
-          if (confirm('Excluir esta movimentação?') && FinancialStore.deleteTransaction(tx)) {
-            Toast.show('Movimentação excluída e saldo recalculado.');
+          if (confirm('Excluir esta movimentação?')) {
+            const deleted = await FinancialStore.deleteTransaction(tx);
+            if (deleted) {
+              Toast.show('Movimentação excluída e saldo recalculado.');
+            }
           }
           return;
         }
@@ -2065,10 +2331,10 @@
       }
     });
     document.getElementById('btn-start-edit-transaction')?.addEventListener('click', () => { document.getElementById('transaction-edit-form').style.display = 'block'; document.getElementById('btn-save-edit-transaction').style.display = 'inline-flex'; document.getElementById('btn-start-edit-transaction').style.display = 'none'; const tx = State.transactions.find(t => t.id === editingTransactionId); if (tx) { document.getElementById('tx-edit-description').value = tx.description; document.getElementById('tx-edit-amount').value = tx.amount; document.getElementById('tx-edit-category').value = tx.category || ''; document.getElementById('tx-edit-payment').value = tx.paymentMethod || ''; document.getElementById('tx-edit-date').value = tx.date; } });
-    document.getElementById('btn-save-edit-transaction')?.addEventListener('click', () => {
+    document.getElementById('btn-save-edit-transaction')?.addEventListener('click', async () => {
       const tx = State.transactions.find(t => t.id === editingTransactionId);
       if (!tx) return;
-      const updated = FinancialStore.updateTransaction(tx, {
+      const updated = await FinancialStore.updateTransaction(tx, {
         description: document.getElementById('tx-edit-description').value,
         amount: NumberParser.value(document.getElementById('tx-edit-amount').value),
         category: document.getElementById('tx-edit-category').value,
@@ -2095,7 +2361,7 @@
       if (endInput && !endInput.value) endInput.value = toInputDate(end);
     };
     document.getElementById('btn-generate-analysis')?.addEventListener('click', fillAnalysisPeriod);
-    analysisForm?.addEventListener('submit', function (event) {
+    analysisForm?.addEventListener('submit', async function (event) {
       event.preventDefault();
       const periodStart = document.getElementById('analysis-period-start').value;
       const periodEnd = document.getElementById('analysis-period-end').value;
@@ -2105,14 +2371,46 @@
       }
 
       const transactions = State.transactions.filter(transaction => transaction.date >= periodStart && transaction.date <= periodEnd);
-      const income = transactions.filter(transaction => transaction.type === 'RECEITA').reduce((sum, transaction) => sum + NumberParser.value(transaction.amount), 0);
-      const expenses = transactions.filter(transaction => transaction.type === 'DESPESA').reduce((sum, transaction) => sum + NumberParser.value(transaction.amount), 0);
-      const debt = State.debts.reduce((sum, item) => sum + NumberParser.value(item.remainingBalance), 0);
+      let income = transactions.filter(transaction => transaction.type === 'RECEITA').reduce((sum, transaction) => sum + NumberParser.value(transaction.amount), 0);
+      let expenses = transactions.filter(transaction => transaction.type === 'DESPESA').reduce((sum, transaction) => sum + NumberParser.value(transaction.amount), 0);
+      let debt = State.debts.reduce((sum, item) => sum + NumberParser.value(item.remainingBalance), 0);
       const incomeBase = income || NumberParser.value(State.user.monthlyIncome);
-      const commitment = incomeBase ? Math.round((expenses / incomeBase) * 100) : 0;
-      const debtLevel = incomeBase ? (debt / incomeBase) * 100 : 0;
-      const profile = commitment > 70 ? 'EM RISCO' : commitment > 50 || debtLevel > 100 ? 'EM OBSERVAÇÃO' : 'SAUDÁVEL';
-      const confidence = State.user.confidenceScore || 82;
+      let commitment = incomeBase ? Math.round((expenses / incomeBase) * 100) : 0;
+      let debtLevel = incomeBase ? (debt / incomeBase) * 100 : 0;
+      let profile = commitment > 70 ? 'EM RISCO' : commitment > 50 || debtLevel > 100 ? 'EM OBSERVAÇÃO' : 'SAUDÁVEL';
+      let confidence = State.user.confidenceScore || 100;
+
+      if (window.ApiService && ApiService.isAuthenticated()) {
+        try {
+          const apiAnalysis = await ApiService.request('/analise-financeira', { method: 'POST' });
+          if (apiAnalysis) {
+            income = NumberParser.value(apiAnalysis.totalReceitas) || income;
+            expenses = NumberParser.value(apiAnalysis.totalDespesas) || expenses;
+            debt = NumberParser.value(apiAnalysis.totalDividas) || debt;
+            commitment = NumberParser.value(apiAnalysis.comprometimentoRenda) || commitment;
+            debtLevel = NumberParser.value(apiAnalysis.nivelEndividamento) || debtLevel;
+            if (apiAnalysis.perfilFinanceiro?.tipo) {
+              profile = apiAnalysis.perfilFinanceiro.tipo;
+            }
+            if (apiAnalysis.scoreConfianca) {
+              confidence = apiAnalysis.scoreConfianca;
+            }
+            if (Array.isArray(apiAnalysis.recomendacoes) && apiAnalysis.recomendacoes.length) {
+              State.recommendations = apiAnalysis.recomendacoes.map(r => ({
+                id: r.id,
+                title: r.categoriaRelacionada ? `Recomendação (${r.categoriaRelacionada})` : 'Recomendação FinGuardian AI',
+                description: r.conteudo,
+                priority: r.prioridade || 'Média',
+                origin: 'FinGuardian AI',
+                accepted: false
+              }));
+              StorageService.set(STORAGE_KEYS.RECOMMENDATIONS, State.recommendations);
+            }
+          }
+        } catch (apiErr) {
+          console.warn('[FinGuardian Analise] Falha no backend, usando cálculo local:', apiErr);
+        }
+      }
 
       State.analysisHistory.unshift({
         id: 'analysis_' + Date.now(),
@@ -2139,7 +2437,7 @@
       const detailsButton = document.getElementById('btn-analysis-details');
       if (detailsButton) detailsButton.textContent = 'Ocultar detalhes';
       Render.all();
-      Toast.show(transactions.length ? 'Nova análise gerada e salva no histórico.' : 'Análise gerada sem movimentações no período.', transactions.length ? 'success' : 'warning');
+      Toast.show('Nova análise financeira gerada com sucesso!', 'success');
     });
     document.getElementById('btn-toggle-deleted-analyses')?.addEventListener('click', function () {
       const deletedList = document.getElementById('analysis-deleted-list');
@@ -2296,7 +2594,7 @@
 
     const diaryForm = document.getElementById('diary-new-note-form');
     if (diaryForm) {
-      diaryForm.addEventListener('submit', function (e) {
+      diaryForm.addEventListener('submit', async function (e) {
         e.preventDefault();
         const newNote = {
           id: 'note_' + Date.now(),
@@ -2305,6 +2603,27 @@
           type: document.getElementById('diary-type-select').value,
           date: document.getElementById('diary-date-input').value || new Date().toISOString().split('T')[0]
         };
+
+        if (window.ApiService && ApiService.isAuthenticated()) {
+          try {
+            const created = await ApiService.request('/diario', {
+              method: 'POST',
+              body: JSON.stringify({
+                titulo: newNote.title,
+                tipo: newNote.type,
+                data: newNote.date,
+                conteudo: newNote.content
+              })
+            });
+            if (created && created.id) {
+              newNote.id = created.id;
+            }
+          } catch (err) {
+            console.error('[FinGuardian Diário] Erro ao salvar no backend:', err);
+            Toast.show(err.message || 'Erro ao salvar anotação no servidor.', 'error');
+            return;
+          }
+        }
 
         State.diary.unshift(newNote);
         StorageService.set(STORAGE_KEYS.DIARY, State.diary);
@@ -2322,7 +2641,7 @@
 
     const shoppingForm = document.getElementById('shopping-new-item-form');
     if (shoppingForm) {
-      shoppingForm.addEventListener('submit', function (e) {
+      shoppingForm.addEventListener('submit', async function (e) {
         e.preventDefault();
         const newItem = {
           id: 'shop_' + Date.now(),
@@ -2333,9 +2652,35 @@
           priority: document.getElementById('shop-priority-select').value,
           purchased: false,
           doNotBuyAgain: document.getElementById('shop-do-not-buy-input')?.checked || false,
-          obs: document.getElementById('shop-obs-input')?.value || ''
-          ,date: document.getElementById('shop-date-input')?.value || new Date().toISOString().split('T')[0]
+          obs: document.getElementById('shop-obs-input')?.value || '',
+          date: document.getElementById('shop-date-input')?.value || new Date().toISOString().split('T')[0]
         };
+
+        if (window.ApiService && ApiService.isAuthenticated()) {
+          try {
+            const created = await ApiService.request('/lista-compras', {
+              method: 'POST',
+              body: JSON.stringify({
+                nome: newItem.title,
+                quantidade: newItem.quantity,
+                precoEstimado: newItem.estimatedPrice,
+                precoPago: newItem.actualPrice,
+                prioridade: newItem.priority,
+                comprado: newItem.purchased,
+                naoComprarNovamente: newItem.doNotBuyAgain,
+                observacao: newItem.obs,
+                data: newItem.date
+              })
+            });
+            if (created && created.id) {
+              newItem.id = created.id;
+            }
+          } catch (err) {
+            console.error('[FinGuardian Item Compra] Erro ao salvar no backend:', err);
+            Toast.show(err.message || 'Erro ao adicionar item no servidor.', 'error');
+            return;
+          }
+        }
 
         State.shopping.push(newItem);
         StorageService.set(STORAGE_KEYS.SHOPPING, State.shopping);
@@ -2712,57 +3057,10 @@
     // Sincronizar sessão existente com a API Spring Boot
     if (window.ApiService && ApiService.isAuthenticated()) {
       try {
-        const perfil = await ApiService.usuario.getPerfil();
-        if (perfil && perfil.id) {
-          State.user = {
-            ...(State.user || {}),
-            id: perfil.id,
-            name: perfil.nome,
-            email: perfil.email,
-            dataCadastro: perfil.dataCadastro,
-            monthlyIncome: State.user?.monthlyIncome || 4500.00
-          };
-          // Carregar contas e dívidas do banco de dados
-          try {
-            const contas = await ApiService.contas.listar();
-            if (Array.isArray(contas)) {
-              State.accounts = contas.map(c => ({
-                id: c.id,
-                name: c.nome,
-                institution: c.instituicao,
-                type: c.tipo,
-                currency: c.moeda || 'BRL',
-                balance: NumberParser.value(c.saldo),
-                creditLimit: NumberParser.value(c.limiteCredito),
-                overdraftLimit: NumberParser.value(c.limiteChequeEspecial),
-                status: c.status || 'Ativa'
-              }));
-              StorageService.set(STORAGE_KEYS.ACCOUNTS, State.accounts);
-            }
-
-            const dividas = await ApiService.dividas.listar();
-            if (Array.isArray(dividas)) {
-              State.debts = dividas.map(d => ({
-                id: d.id,
-                description: d.descricao,
-                originalAmount: NumberParser.value(d.valorOriginal),
-                remainingBalance: NumberParser.value(d.saldoDevedor),
-                installmentValue: NumberParser.value(d.valorParcela),
-                remainingInstallments: d.parcelasRestantes,
-                interestRate: NumberParser.value(d.taxaJuros),
-                dueDate: d.dataVencimento,
-                status: d.status || 'Em dia'
-              }));
-              StorageService.set(STORAGE_KEYS.DEBTS, State.debts);
-            }
-          } catch (syncErr) {
-            console.warn('[FinGuardian Sync] Erro ao sincronizar contas/dívidas no startup:', syncErr);
-          }
-
-          document.getElementById('auth-layout').style.display = 'none';
-          document.getElementById('main-app-layout').style.display = 'flex';
-          document.getElementById('floating-ai-button')?.classList.remove('is-hidden');
-        }
+        await syncAllDataFromBackend();
+        document.getElementById('auth-layout').style.display = 'none';
+        document.getElementById('main-app-layout').style.display = 'flex';
+        document.getElementById('floating-ai-button')?.classList.remove('is-hidden');
       } catch (authError) {
         console.warn('[FinGuardian Sessão] Sessão não validada:', authError);
         if (authError.status === 401) {

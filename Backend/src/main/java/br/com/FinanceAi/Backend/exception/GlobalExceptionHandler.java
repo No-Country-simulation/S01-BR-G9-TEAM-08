@@ -104,4 +104,13 @@ public class GlobalExceptionHandler {
                 HttpStatus.NOT_FOUND
         ));
     }
+
+    @ExceptionHandler(MovimentacaoNaoEncontradaException.class)
+    public ResponseEntity<ErrorResponse> handleMovimentacaoNaoEncontrada(MovimentacaoNaoEncontradaException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse(
+                "Movimentação inexistente",
+                ex.getMessage(),
+                HttpStatus.NOT_FOUND
+        ));
+    }
 }

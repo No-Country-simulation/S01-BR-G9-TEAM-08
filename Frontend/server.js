@@ -59,7 +59,7 @@ const server = http.createServer((req, res) => {
   const pathname = parsedUrl.pathname;
 
   // 1. Redirecionar requisições da API para o Spring Boot (Proxy)
-  if (pathname.startsWith('/auth') || pathname.startsWith('/usuarios') || pathname.startsWith('/contas') || pathname.startsWith('/dividas') || pathname.startsWith('/api')) {
+  if (pathname.startsWith('/auth') || pathname.startsWith('/usuarios') || pathname.startsWith('/contas') || pathname.startsWith('/dividas') || pathname.startsWith('/movimentacoes') || pathname.startsWith('/receitas') || pathname.startsWith('/despesas') || pathname.startsWith('/diario') || pathname.startsWith('/lista-compras') || pathname.startsWith('/recomendacoes') || pathname.startsWith('/dashboard') || pathname.startsWith('/analise-financeira') || pathname.startsWith('/api')) {
     const proxyOptions = {
       hostname: BACKEND_HOST,
       port: BACKEND_PORT,
