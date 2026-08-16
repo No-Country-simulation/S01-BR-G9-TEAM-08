@@ -2,12 +2,14 @@ package br.com.FinanceAi.Backend.service;
 
 import br.com.FinanceAi.Backend.dto.request.DiarioRequest;
 import br.com.FinanceAi.Backend.entity.DiarioFinanceiro;
+import br.com.FinanceAi.Backend.entity.enums.TipoDiarioEnum;
 import br.com.FinanceAi.Backend.exception.ResourceNotFoundException;
 import br.com.FinanceAi.Backend.repository.DiarioRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -21,12 +23,14 @@ public class DiarioService {
             DiarioRequest request,
             Long usuarioId
     ) {
+        TipoDiarioEnum tipo = request.tipo() != null ? request.tipo() : TipoDiarioEnum.ANOTACAO;
+        LocalDate data = request.data() != null ? request.data() : LocalDate.now();
 
         DiarioFinanceiro diario = DiarioFinanceiro.builder()
-                .titulo(request.titulo())
-                .tipo(request.tipo())
-                .data(request.data())
-                .conteudo(request.conteudo())
+                .titulo(request.titulo().trim())
+                .tipo(tipo)
+                .data(data)
+                .conteudo(request.conteudo().trim())
                 .usuarioId(usuarioId)
                 .ativo(true)
                 .build();
@@ -69,10 +73,10 @@ public class DiarioService {
         DiarioFinanceiro diario =
                 buscarPorId(id, usuarioId);
 
-        diario.setTitulo(request.titulo());
-        diario.setTipo(request.tipo());
-        diario.setData(request.data());
-        diario.setConteudo(request.conteudo());
+        if (request.titulo() != null) diario.setTitulo(request.titulo().trim());
+        if (request.tipo() != null) diario.setTipo(request.tipo());
+        if (request.data() != null) diario.setData(request.data());
+        if (request.conteudo() != null) diario.setConteudo(request.conteudo().trim());
 
         return diarioRepository.save(diario);
     }

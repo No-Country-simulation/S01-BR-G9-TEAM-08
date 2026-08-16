@@ -510,24 +510,29 @@
        * POST /movimentacoes
        */
       criar: function (data) {
+        const rawOrigemId = data.contaOrigemId !== undefined ? data.contaOrigemId : data.accountId;
+        const validOrigemId = (Number.isInteger(Number(rawOrigemId)) && !String(rawOrigemId).startsWith('acc_')) ? Number(rawOrigemId) : null;
+        const rawDestinoId = data.contaDestinoId !== undefined ? data.contaDestinoId : data.destinationAccountId;
+        const validDestinoId = (Number.isInteger(Number(rawDestinoId)) && !String(rawDestinoId).startsWith('acc_')) ? Number(rawDestinoId) : null;
+
         return ApiService.request('/movimentacoes', {
           method: 'POST',
           body: JSON.stringify({
-            tipo: data.tipo || data.type,
+            tipo: data.tipo || data.type || 'DESPESA',
             descricao: data.descricao || data.description,
-            valor: data.valor !== undefined ? data.valor : data.amount,
-            data: data.data || data.date,
-            categoria: data.categoria || data.category,
-            subcategoria: data.subcategoria || data.subcategory,
-            contaOrigemId: data.contaOrigemId || data.accountId,
-            contaOrigemNome: data.contaOrigemNome || data.account,
-            contaDestinoId: data.contaDestinoId || data.destinationAccountId,
-            contaDestinoNome: data.contaDestinoNome || data.destinationAccount,
-            formaPagamento: data.formaPagamento || data.paymentMethod,
+            valor: data.valor !== undefined ? Number(data.valor) : (data.amount !== undefined ? Number(data.amount) : 0),
+            data: data.data || data.date || new Date().toISOString().split('T')[0],
+            categoria: data.categoria || data.category || 'Geral',
+            subcategoria: data.subcategoria || data.subcategory || null,
+            contaOrigemId: validOrigemId,
+            contaOrigemNome: data.contaOrigemNome || data.account || 'Carteira Principal',
+            contaDestinoId: validDestinoId,
+            contaDestinoNome: data.contaDestinoNome || data.destinationAccount || null,
+            formaPagamento: data.formaPagamento || data.paymentMethod || 'PIX',
             recorrencia: data.recorrencia || data.recurrence || 'Única',
-            observacoes: data.observacoes || data.obs,
-            saldoReal: data.saldoReal !== undefined ? data.saldoReal : data.realBalance,
-            motivoAjuste: data.motivoAjuste || data.reason,
+            observacoes: data.observacoes || data.obs || null,
+            saldoReal: data.saldoReal !== undefined ? Number(data.saldoReal) : (data.realBalance !== undefined ? Number(data.realBalance) : null),
+            motivoAjuste: data.motivoAjuste || data.reason || null,
             origemIA: Boolean(data.origemIA || data.origin === 'CONVERSA_IA')
           })
         });
@@ -538,23 +543,28 @@
        * PUT /movimentacoes/{id}
        */
       atualizar: function (id, data) {
+        const rawOrigemId = data.contaOrigemId !== undefined ? data.contaOrigemId : data.accountId;
+        const validOrigemId = (Number.isInteger(Number(rawOrigemId)) && !String(rawOrigemId).startsWith('acc_')) ? Number(rawOrigemId) : null;
+        const rawDestinoId = data.contaDestinoId !== undefined ? data.contaDestinoId : data.destinationAccountId;
+        const validDestinoId = (Number.isInteger(Number(rawDestinoId)) && !String(rawDestinoId).startsWith('acc_')) ? Number(rawDestinoId) : null;
+
         return ApiService.request(`/movimentacoes/${id}`, {
           method: 'PUT',
           body: JSON.stringify({
             tipo: data.tipo || data.type,
             descricao: data.descricao || data.description,
-            valor: data.valor !== undefined ? data.valor : data.amount,
+            valor: data.valor !== undefined ? Number(data.valor) : (data.amount !== undefined ? Number(data.amount) : undefined),
             data: data.data || data.date,
             categoria: data.categoria || data.category,
             subcategoria: data.subcategoria || data.subcategory,
-            contaOrigemId: data.contaOrigemId || data.accountId,
+            contaOrigemId: validOrigemId,
             contaOrigemNome: data.contaOrigemNome || data.account,
-            contaDestinoId: data.contaDestinoId || data.destinationAccountId,
+            contaDestinoId: validDestinoId,
             contaDestinoNome: data.contaDestinoNome || data.destinationAccount,
             formaPagamento: data.formaPagamento || data.paymentMethod,
             recorrencia: data.recorrencia || data.recurrence,
             observacoes: data.observacoes || data.obs,
-            saldoReal: data.saldoReal !== undefined ? data.saldoReal : data.realBalance,
+            saldoReal: data.saldoReal !== undefined ? Number(data.saldoReal) : (data.realBalance !== undefined ? Number(data.realBalance) : undefined),
             motivoAjuste: data.motivoAjuste || data.reason,
             origemIA: Boolean(data.origemIA)
           })
@@ -567,6 +577,73 @@
        */
       excluir: function (id) {
         return ApiService.request(`/movimentacoes/${id}`, {
+          method: 'DELETE'
+        });
+      }
+    },
+
+    /* ==========================================================================
+       ENDPOINTS DE DIÁRIO FINANCEIRO (DiarioController)
+       ========================================================================== */
+    diario: {
+      /**
+       * Lista todas as anotações do diário financeiro.
+       * GET /diario
+       */
+      listar: function () {
+        return ApiService.request('/diario', {
+          method: 'GET'
+        });
+      },
+
+      /**
+       * Busca uma anotação pelo ID.
+       * GET /diario/{id}
+       */
+      buscarPorId: function (id) {
+        return ApiService.request(`/diario/${id}`, {
+          method: 'GET'
+        });
+      },
+
+      /**
+       * Cadastra uma nova anotação no diário financeiro.
+       * POST /diario
+       */
+      criar: function (data) {
+        return ApiService.request('/diario', {
+          method: 'POST',
+          body: JSON.stringify({
+            titulo: data.titulo || data.title,
+            tipo: data.tipo || data.type || 'anotacao',
+            data: data.data || data.date || new Date().toISOString().split('T')[0],
+            conteudo: data.conteudo || data.content
+          })
+        });
+      },
+
+      /**
+       * Atualiza uma anotação existente no diário financeiro.
+       * PUT /diario/{id}
+       */
+      atualizar: function (id, data) {
+        return ApiService.request(`/diario/${id}`, {
+          method: 'PUT',
+          body: JSON.stringify({
+            titulo: data.titulo || data.title,
+            tipo: data.tipo || data.type || 'anotacao',
+            data: data.data || data.date,
+            conteudo: data.conteudo || data.content
+          })
+        });
+      },
+
+      /**
+       * Exclui uma anotação do diário financeiro.
+       * DELETE /diario/{id}
+       */
+      excluir: function (id) {
+        return ApiService.request(`/diario/${id}`, {
           method: 'DELETE'
         });
       }

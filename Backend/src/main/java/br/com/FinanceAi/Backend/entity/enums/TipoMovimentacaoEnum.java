@@ -6,20 +6,16 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import java.text.Normalizer;
 import java.util.Locale;
 
-public enum TipoDiarioEnum {
+public enum TipoMovimentacaoEnum {
 
-    ANOTACAO("anotacao"),
-    LISTA_COMPRAS("lista_compras"),
-    PLANEJAMENTO("planejamento"),
-    REFLEXAO("reflexao"),
-    META("meta"),
-    LEMBRETE("lembrete"),
-    GASTO_FUTURO("gasto_futuro"),
-    NAO_COMPRAR_NOVAMENTE("nao_comprar_novamente");
+    RECEITA("RECEITA"),
+    DESPESA("DESPESA"),
+    TRANSFERENCIA("TRANSFERENCIA"),
+    AJUSTE_SALDO("AJUSTE_SALDO");
 
     private final String valor;
 
-    TipoDiarioEnum(String valor) {
+    TipoMovimentacaoEnum(String valor) {
         this.valor = valor;
     }
 
@@ -29,28 +25,28 @@ public enum TipoDiarioEnum {
     }
 
     @JsonCreator
-    public static TipoDiarioEnum fromValue(String value) {
+    public static TipoMovimentacaoEnum fromValue(String value) {
         if (value == null || value.isBlank()) {
-            return ANOTACAO;
+            return null;
         }
 
         String valorNormalizado = normalizar(value);
 
-        for (TipoDiarioEnum tipo : values()) {
+        for (TipoMovimentacaoEnum tipo : values()) {
             if (normalizar(tipo.valor).equals(valorNormalizado)
                     || normalizar(tipo.name()).equals(valorNormalizado)) {
                 return tipo;
             }
         }
 
-        return ANOTACAO;
+        throw new IllegalArgumentException("Tipo de movimentação inválido: " + value);
     }
 
     private static String normalizar(String value) {
         return Normalizer
                 .normalize(
                         value.trim()
-                                .toLowerCase(Locale.ROOT)
+                                .toUpperCase(Locale.ROOT)
                                 .replace(" ", "_"),
                         Normalizer.Form.NFD
                 )

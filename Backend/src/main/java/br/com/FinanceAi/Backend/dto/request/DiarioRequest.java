@@ -2,7 +2,6 @@ package br.com.FinanceAi.Backend.dto.request;
 
 import br.com.FinanceAi.Backend.entity.enums.TipoDiarioEnum;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 import java.time.LocalDate;
@@ -13,10 +12,8 @@ public record DiarioRequest(
         @Size(max = 255, message = "O título deve ter no máximo 255 caracteres")
         String titulo,
 
-        @NotNull(message = "O tipo é obrigatório")
         TipoDiarioEnum tipo,
 
-        @NotNull(message = "A data é obrigatória")
         LocalDate data,
 
         @NotBlank(message = "O conteúdo é obrigatório")

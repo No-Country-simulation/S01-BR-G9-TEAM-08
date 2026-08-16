@@ -746,19 +746,26 @@
     diary: function () {
       const container = document.getElementById('diary-timeline-container');
       if (container) {
-        container.innerHTML = State.diary.map(n => `
-          <div class="timeline-item">
-            <div class="timeline-dot"></div>
-            <div class="timeline-content">
-              <div style="display: flex; justify-content: space-between; align-items: center;">
-                <span class="badge badge-accent" style="text-transform: uppercase;">${n.type}</span>
-                <span class="timeline-date">${Formatters.date(n.date)}</span>
+        if (!State.diary.length) {
+          container.innerHTML = '<div class="empty-state" style="padding: 2rem; text-align: center; color: var(--color-text-muted);">Nenhuma anotação registrada ainda. Crie sua primeira nota ao lado!</div>';
+        } else {
+          container.innerHTML = State.diary.map(n => `
+            <div class="timeline-item">
+              <div class="timeline-dot"></div>
+              <div class="timeline-content">
+                <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem;">
+                  <span class="badge badge-accent" style="text-transform: uppercase;">${n.type}</span>
+                  <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <span class="timeline-date">${Formatters.date(n.date)}</span>
+                    <button type="button" class="btn btn-outline btn-xs diary-delete-btn" data-id="${n.id}" title="Excluir anotação" style="padding: 0.1rem 0.4rem; font-size: 0.75rem; border-color: var(--color-risk); color: var(--color-risk);">Excluir</button>
+                  </div>
+                </div>
+                <h4 style="font-weight: 700; margin: 0.35rem 0; color: var(--color-text-main);">${n.title}</h4>
+                <p style="color: var(--color-text-muted); font-size: 0.9rem; line-height: 1.4; white-space: pre-wrap;">${n.content}</p>
               </div>
-              <h4 style="font-weight: 700; margin: 0.35rem 0; color: var(--color-text-main);">${n.title}</h4>
-              <p style="color: var(--color-text-muted); font-size: 0.9rem; line-height: 1.4;">${n.content}</p>
             </div>
-          </div>
-        `).join('');
+          `).join('');
+        }
       }
 
       const shoppingPreview = document.getElementById('diary-shopping-preview');
@@ -865,7 +872,7 @@
         ApiService.movimentacoes.listar(),
         ApiService.request('/receitas', { method: 'GET' }),
         ApiService.request('/despesas', { method: 'GET' }),
-        ApiService.request('/diario', { method: 'GET' }),
+        ApiService.diario.listar(),
         ApiService.request('/lista-compras', { method: 'GET' }),
         ApiService.request('/recomendacoes', { method: 'GET' }),
         ApiService.request('/dashboard', { method: 'GET' })
@@ -1194,6 +1201,9 @@
           Toast.show(apiErr.message || 'Erro ao registrar movimentação no servidor.', 'error');
           return false;
         }
+      } else {
+        console.warn('[FinGuardian] Usuário não autenticado no backend. Faça login para persistir no banco de dados.');
+        Toast.show('Aviso: Faça login para salvar suas movimentações diretamente no banco de dados.', 'warning');
       }
 
       // Se a conta não foi informada ou não existe, usa a primeira conta ativa ou Carteira Principal
@@ -1248,6 +1258,15 @@
       if (!this.applyTransactionEffect(transaction, 1)) return false;
       State.transactions.unshift(transaction);
       this.refresh();
+
+      // Sincroniza em background com o backend para manter saldos e totais das contas 100% atualizados
+      if (window.ApiService && ApiService.isAuthenticated()) {
+        syncAllDataFromBackend().then(() => {
+          Render.all();
+        }).catch(err => {
+          console.warn('[FinGuardian] Atualização após salvar movimentação:', err);
+        });
+      }
       return true;
     },
 
@@ -2329,6 +2348,25 @@
           }
         }
       }
+
+      // Ações no Diário Financeiro
+      const diaryDeleteBtn = e.target.closest('.diary-delete-btn');
+      if (diaryDeleteBtn) {
+        const noteId = diaryDeleteBtn.dataset.id;
+        if (!confirm('Deseja realmente excluir esta anotação do diário?')) return;
+        try {
+          if (window.ApiService && ApiService.isAuthenticated() && !String(noteId).startsWith('note_')) {
+            await ApiService.diario.excluir(noteId);
+          }
+          State.diary = State.diary.filter(n => String(n.id) !== String(noteId));
+          StorageService.set(STORAGE_KEYS.DIARY, State.diary);
+          Render.diary();
+          Toast.show('Anotação excluída com sucesso.');
+        } catch (err) {
+          console.error('[FinGuardian Diário Excluir]', err);
+          Toast.show(err.message || 'Erro ao excluir anotação no servidor.', 'error');
+        }
+      }
     });
     document.getElementById('btn-start-edit-transaction')?.addEventListener('click', () => { document.getElementById('transaction-edit-form').style.display = 'block'; document.getElementById('btn-save-edit-transaction').style.display = 'inline-flex'; document.getElementById('btn-start-edit-transaction').style.display = 'none'; const tx = State.transactions.find(t => t.id === editingTransactionId); if (tx) { document.getElementById('tx-edit-description').value = tx.description; document.getElementById('tx-edit-amount').value = tx.amount; document.getElementById('tx-edit-category').value = tx.category || ''; document.getElementById('tx-edit-payment').value = tx.paymentMethod || ''; document.getElementById('tx-edit-date').value = tx.date; } });
     document.getElementById('btn-save-edit-transaction')?.addEventListener('click', async () => {
@@ -2596,24 +2634,31 @@
     if (diaryForm) {
       diaryForm.addEventListener('submit', async function (e) {
         e.preventDefault();
+        const title = document.getElementById('diary-title-input')?.value.trim();
+        const content = document.getElementById('diary-content-input')?.value.trim();
+        const type = document.getElementById('diary-type-select')?.value || 'anotacao';
+        const date = document.getElementById('diary-date-input')?.value || new Date().toISOString().split('T')[0];
+
+        if (!title || !content) {
+          Toast.show('Preencha o título e o conteúdo da anotação.', 'warning');
+          return;
+        }
+
         const newNote = {
           id: 'note_' + Date.now(),
-          title: document.getElementById('diary-title-input').value,
-          content: document.getElementById('diary-content-input').value,
-          type: document.getElementById('diary-type-select').value,
-          date: document.getElementById('diary-date-input').value || new Date().toISOString().split('T')[0]
+          title,
+          content,
+          type,
+          date
         };
 
         if (window.ApiService && ApiService.isAuthenticated()) {
           try {
-            const created = await ApiService.request('/diario', {
-              method: 'POST',
-              body: JSON.stringify({
-                titulo: newNote.title,
-                tipo: newNote.type,
-                data: newNote.date,
-                conteudo: newNote.content
-              })
+            const created = await ApiService.diario.criar({
+              titulo: title,
+              tipo: type,
+              data: date,
+              conteudo: content
             });
             if (created && created.id) {
               newNote.id = created.id;
@@ -2623,13 +2668,20 @@
             Toast.show(err.message || 'Erro ao salvar anotação no servidor.', 'error');
             return;
           }
+        } else {
+          console.warn('[FinGuardian] Usuário não autenticado no backend.');
+          Toast.show('Aviso: Faça login para salvar suas anotações diretamente no banco de dados.', 'warning');
         }
 
         State.diary.unshift(newNote);
         StorageService.set(STORAGE_KEYS.DIARY, State.diary);
         diaryForm.reset();
         Render.diary();
-        Toast.show('Anotação salva no diário!');
+        Toast.show('Anotação salva no diário com sucesso!', 'success');
+
+        if (window.ApiService && ApiService.isAuthenticated()) {
+          syncAllDataFromBackend().then(() => Render.diary()).catch(() => {});
+        }
       });
     }
 
