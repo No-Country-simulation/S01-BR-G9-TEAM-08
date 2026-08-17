@@ -43,6 +43,23 @@ function addCorsHeaders(res) {
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
   res.setHeader('Access-Control-Max-Age', '86400');
+  addSecurityHeaders(res);
+}
+
+function addSecurityHeaders(res) {
+  const headers = securityHeaders();
+  for (const [name, value] of Object.entries(headers)) {
+    res.setHeader(name, value);
+  }
+}
+
+function securityHeaders() {
+  return {
+    'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
+    'X-Frame-Options': 'DENY',
+    'X-Content-Type-Options': 'nosniff',
+    'Referrer-Policy': 'strict-origin-when-cross-origin'
+  };
 }
 
 const server = http.createServer((req, res) => {
@@ -74,10 +91,11 @@ const server = http.createServer((req, res) => {
     const proxyReq = http.request(proxyOptions, (proxyRes) => {
       // Manter status e headers da API Spring Boot
       const headers = { ...proxyRes.headers };
-      // Garantir CORS na resposta
+      // Garantir CORS e headers de segurança na resposta
       headers['access-control-allow-origin'] = '*';
       headers['access-control-allow-methods'] = 'GET, POST, PUT, PATCH, DELETE, OPTIONS';
       headers['access-control-allow-headers'] = 'Origin, X-Requested-With, Content-Type, Accept, Authorization';
+      Object.assign(headers, securityHeaders());
 
       res.writeHead(proxyRes.statusCode, headers);
       proxyRes.pipe(res);

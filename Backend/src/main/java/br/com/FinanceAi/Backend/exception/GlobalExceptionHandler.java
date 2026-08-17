@@ -28,7 +28,7 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(new ErrorResponse(
                         "Email duplicado",
-                        ex.getMessage(),
+                        "Já existe uma conta cadastrada com este e-mail.",
                         HttpStatus.CONFLICT
                 ));
     }
@@ -66,11 +66,11 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(NovaSenhaIgualAtualException.class)
-    public ResponseEntity<ErrorResponse> handleSenhaIgualAtual(SenhaAtualIncorretaException ex) {
+    public ResponseEntity<ErrorResponse> handleSenhaIgualAtual(NovaSenhaIgualAtualException ex) {
         return ResponseEntity.status(
                 HttpStatus.BAD_REQUEST
         ).body(new ErrorResponse(
-                "Erro Senha atual",
+                "Erro Senha Igual",
                 ex.getMessage(),
                 HttpStatus.BAD_REQUEST
         ));
@@ -81,7 +81,7 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(
                 HttpStatus.BAD_REQUEST
         ).body(new ErrorResponse(
-                "Erro Senha Igual",
+                "Erro Senha atual",
                 ex.getMessage(),
                 HttpStatus.BAD_REQUEST
         ));

@@ -14,7 +14,7 @@ public record UsuarioCadastraRequest(
         String email,
 
         @NotBlank
-        @Size(min = 6, max = 100, message = "Senha deve ter no mínimo de 6 caracteres")
+        @Size(min = 8, max = 100, message = "Senha deve ter no mínimo de 8 caracteres")
         String senha
 
 ) {
