@@ -99,18 +99,22 @@ Você pode acessar o FinGuardian AI diretamente através do nosso domínio ofici
 
 ### Pré-requisitos
 
-- Java 21
-- Maven 3.9+
-- PostgreSQL 16+
-- Git
+- Docker e Docker Compose (Recomendado)
+- Ou localmente: Java 21, Maven 3.9+, PostgreSQL 16+
 
-### Instalação
+### Instalação com Docker (Recomendado)
 
 ```bash
 git clone https://github.com/No-Country-simulation/S01-BR-G9-TEAM-08.git
-
 cd S01-BR-G9-TEAM-08
 
+docker-compose up -d --build
+```
+
+### Executando Localmente (Backend)
+
+```bash
+cd Backend
 mvn spring-boot:run
 ```
 
@@ -153,12 +157,16 @@ mvn spring-boot:run
 
 ```text
 📦 FinGuardian
-┣ 📂 backend
+┣ 📂 Backend
 ┃ ┣ 📂 src
-┃ ┣ 📂 docs
 ┃ ┗ 📜 pom.xml
-┣ 📂 frontend
-┣ 📂 database
+┣ 📂 Database
+┣ 📂 Docs
+┃ ┣ 📜 1_Especificacao_Requisitos_Arquitetura.md
+┃ ┣ 📜 2_Apresentacao_Principal.md
+┃ ┗ 📜 3_Documentacao_API_REST.md
+┣ 📂 Frontend
+┣ 📜 docker-compose.yml
 ┣ 📜 README.md
 ┗ 📜 .gitignore
 ```
@@ -175,7 +183,11 @@ mvn spring-boot:run
 
 📋 [**Quadro Trello**](https://trello.com/b/RxKuz0ec/g9-equipe-08-brasil)
 
-📄 [**Documentação**](https://docs.google.com/document/d/1y_H0BXH-ShkH-L08tipggLHcjtMfQp9gaxV049ceevA/edit?tab=t.0)
+📄 **Documentações do Projeto:**
+- [Especificação de Requisitos e Arquitetura](./Docs/1_Especificacao_Requisitos_Arquitetura.md)
+- [Apresentação Principal](./Docs/2_Apresentacao_Principal.md)
+- [Documentação da API REST](./Docs/3_Documentacao_API_REST.md)
+- [Documentação Inicial (Google Docs)](https://docs.google.com/document/d/1y_H0BXH-ShkH-L08tipggLHcjtMfQp9gaxV049ceevA/edit?tab=t.0)
 
 ---
 
@@ -189,7 +201,7 @@ mvn spring-boot:run
 - [x] Frontend
 - [x] Integração
 - [x] Deploy na Oracle Cloud (OCI)
-- [ ] Testes automatizados
+- [x] Testes automatizados
 
 ---
 
