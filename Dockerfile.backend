@@ -1,6 +1,8 @@
 FROM maven:3.9.9-eclipse-temurin-21-alpine AS build
 WORKDIR /app
 
+ENV MAVEN_OPTS="-Xmx512m -XX:MaxMetaspaceSize=256m -Dmaven.wagon.http.retryHandler.count=3 -Dmaven.wagon.http.retryHandler.requestSentEnabled=true"
+
 COPY Backend/pom.xml .
 RUN mvn -B -q dependency:go-offline
 
