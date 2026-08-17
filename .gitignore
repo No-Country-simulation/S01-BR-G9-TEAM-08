@@ -1,0 +1,12 @@
+# Ambiente / segredos
+.env
+.env.local
+.env.*.local
+
+# IDE
+.idea/
+.vscode/
+
+# Builds e dependências
+Backend/target/
+node_modules/
