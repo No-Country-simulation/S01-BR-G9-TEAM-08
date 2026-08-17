@@ -1,13 +1,14 @@
 <div align="center">
 
-# 🚀 FinanceAI
+# 🚀 FinGuardian AI
 
 ### Plataforma inteligente para gestão financeira pessoal
 
 ![Java](https://img.shields.io/badge/Java-21-orange?logo=openjdk)
 ![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.x-6DB33F?logo=springboot)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql)
-![Status](https://img.shields.io/badge/Status-Em%20Desenvolvimento-blue)
+![Status](https://img.shields.io/badge/Status-Em%20Produ%C3%A7%C3%A3o-green)
+![Oracle Cloud](https://img.shields.io/badge/Oracle_Cloud-OCI-F80000?logo=oracle)
 
 </div>
 
@@ -19,6 +20,7 @@
 - 🎯 [Objetivos](#-objetivos)
 - 📌 [Funcionalidades](#-funcionalidades)
 - 🏗️ [Arquitetura](#️-arquitetura)
+- 🌐 [Acesso e Hospedagem](#-acesso-e-hospedagem)
 - 🚀 [Setup](#-setup)
 - 👥 [Equipe](#-equipe)
 - 🛠️ [Tecnologias](#️-tecnologias)
@@ -29,7 +31,7 @@
 
 ## 📝 Sobre
 
-O **FinanceAI** é uma plataforma de gestão financeira pessoal desenvolvida para auxiliar usuários no controle de receitas, despesas e indicadores financeiros. A aplicação incorpora recursos de inteligência artificial para fornecer recomendações e insights personalizados, promovendo uma gestão financeira mais consciente e eficiente.
+O **FinGuardian AI** é uma plataforma de gestão financeira pessoal desenvolvida para auxiliar usuários no controle de receitas, despesas e indicadores financeiros. A aplicação incorpora recursos de inteligência artificial para fornecer recomendações e insights personalizados, promovendo uma gestão financeira mais consciente e eficiente.
 
 O projeto foi desenvolvido no âmbito do **Oracle Next Education (ONE)**, em parceria com a **Alura**, durante o Hackathon realizado na plataforma **No Country**, integrando conhecimentos de Engenharia de Software e Inteligência de Dados para entregar uma solução moderna, escalável e centrada na experiência do usuário.
 
@@ -43,7 +45,7 @@ Este MVP busca:
 - ✅ Registrar receitas e despesas.
 - ✅ Organizar gastos por categorias.
 - ✅ Exibir dashboards financeiros.
-- ✅ Utilizar IA para gerar recomendações de economia.
+- ✅ Utilizar IA para gerar recomendações de economia (O assistente "Fin").
 - ✅ Apresentar indicadores da saúde financeira do usuário.
 
 ---
@@ -54,8 +56,10 @@ Este MVP busca:
 - 💸 Registro de despesas
 - 💰 Registro de receitas
 - 📈 Dashboard financeiro
-- 🤖 Recomendações com IA
-- 📊 Relatórios financeiros
+- 🤖 Recomendações personalizadas com IA (Fin)
+- 📊 Relatórios financeiros detalhados
+- 📔 Diário financeiro para metas e lembretes
+- 🛒 Lista de compras integrada
 
 ---
 
@@ -79,6 +83,16 @@ A solução foi desenvolvida integrando conceitos de **Engenharia de Software** 
          │                       │
 🤖 Serviço de IA          🐘 PostgreSQL
 ```
+---
+
+## 🌐 Acesso e Hospedagem
+
+A nossa aplicação já está no ar! Ela foi hospedada de forma escalável utilizando uma **Máquina Virtual (VM) da Oracle Cloud Infrastructure (OCI)**. 
+
+Você pode acessar o FinGuardian AI diretamente através do nosso domínio oficial:
+
+🔗 **[www.finguardian.com.br](http://www.finguardian.com.br)**
+
 ---
 
 ## 🚀 Setup
@@ -130,6 +144,7 @@ mvn spring-boot:run
 | Backend | Java 21, Spring Boot |
 | Frontend | HTML5, CSS3, JavaScript |
 | Banco de Dados | PostgreSQL |
+| Cloud e Infraestrutura | Oracle Cloud Infrastructure (OCI VM) |
 | Ferramentas | VS Code, GitHub, Trello, Postman, ChatGPT, Claude |
 
 ---
@@ -137,7 +152,7 @@ mvn spring-boot:run
 ## 📂 Estrutura do Projeto
 
 ```text
-📦 FinanceAI
+📦 FinGuardian
 ┣ 📂 backend
 ┃ ┣ 📂 src
 ┃ ┣ 📂 docs
@@ -152,13 +167,15 @@ mvn spring-boot:run
 
 ## 🔗 Links
 
-📁 [**Repositório**](https://github.com/No-Country-simulation/S01-BR-G9-TEAM-08)
+🌐 **Site Oficial:** [www.finguardian.com.br](http://www.finguardian.com.br)
 
-🎥 [**Demonstração**](LINKYOUTUBE)
+📁 [**Repositório Github**](https://github.com/No-Country-simulation/S01-BR-G9-TEAM-08)
 
-📋 [**Trello**](https://trello.com/b/RxKuz0ec/g9-equipe-08-brasil)
+🎥 [**Demonstração no Youtube**](LINKYOUTUBE)
 
-📄 [Documentação](https://docs.google.com/document/d/1y_H0BXH-ShkH-L08tipggLHcjtMfQp9gaxV049ceevA/edit?tab=t.0)
+📋 [**Quadro Trello**](https://trello.com/b/RxKuz0ec/g9-equipe-08-brasil)
+
+📄 [**Documentação**](https://docs.google.com/document/d/1y_H0BXH-ShkH-L08tipggLHcjtMfQp9gaxV049ceevA/edit?tab=t.0)
 
 ---
 
@@ -168,11 +185,11 @@ mvn spring-boot:run
 - [x] Organização da equipe
 - [x] Documentação inicial
 - [x] Definição da arquitetura
-- [ ] Backend
-- [ ] Frontend
-- [ ] Integração
-- [ ] Testes
-- [ ] Deploy
+- [x] Backend
+- [x] Frontend
+- [x] Integração
+- [x] Deploy na Oracle Cloud (OCI)
+- [ ] Testes automatizados
 
 ---
 
