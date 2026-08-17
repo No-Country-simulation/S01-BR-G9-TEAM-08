@@ -677,6 +677,24 @@
         }
         return response;
       }
+    },
+
+    /* ==========================================================================
+       ENDPOINTS DO FIN (Chatbot IA)
+       ========================================================================== */
+    fin: {
+      /**
+       * Envia mensagem para o assistente virtual Fin com histórico opcional.
+       * POST /api/fin/chat
+       * @param {Object} data { mensagem, historico }
+       * @returns {Promise<Object>}
+       */
+      chat: function (data) {
+        return ApiService.request('/api/fin/chat', {
+          method: 'POST',
+          body: JSON.stringify(data)
+        });
+      }
     }
   };
 

@@ -643,7 +643,7 @@
                 <span class="badge badge-accent">${acc.type}</span>
               </div>
               <p style="color: var(--color-text-muted); font-size: 0.85rem; margin-bottom: 1rem;">${acc.institution} • ${acc.currency}</p>
-              <div style="font-size: 1.6rem; font-weight: 800; color: var(--color-primary-dark); margin-bottom: 0.75rem;">
+              <div style="font-size: 1.6rem; font-weight: 800; color: var(--color-positive); margin-bottom: 0.75rem;">
                 ${Formatters.currency(acc.balance)}
               </div>
               <div style="font-size: 0.8rem; color: var(--color-text-muted); display: flex; justify-content: space-between;">
@@ -1499,120 +1499,134 @@
     if (!finButton || !finModal || finButton.dataset.finBound === 'true') return;
     finButton.dataset.finBound = 'true';
 
-    const showPromptStep = function (clearPrompt = false) {
-      finPromptStep.hidden = false;
-      finReviewStep.hidden = true;
-      finReviewFooter.hidden = true;
-      if (clearPrompt) document.getElementById('fin-prompt-input').value = '';
-      window.setTimeout(() => document.getElementById('fin-prompt-input')?.focus(), 40);
-    };
-
-    const showReviewStep = function (suggestion) {
-      document.getElementById('fin-type').value = suggestion.type;
-      document.getElementById('fin-description').value = suggestion.description;
-      document.getElementById('fin-amount').value = suggestion.amount;
-      document.getElementById('fin-category').value = suggestion.category;
-      document.getElementById('fin-account').value = suggestion.account;
-      document.getElementById('fin-payment').value = suggestion.paymentMethod;
-      document.getElementById('fin-date').value = suggestion.date;
-      document.getElementById('fin-confidence').textContent = `${suggestion.confidenceScore}%`;
-      finPromptStep.hidden = true;
-      finReviewStep.hidden = false;
-      finReviewFooter.hidden = false;
-      window.setTimeout(() => document.getElementById('fin-description')?.focus(), 40);
-    };
+    let finChatHistory = [];
 
     const openAssistant = function () {
       const mainApp = document.getElementById('main-app-layout');
       if (!mainApp || window.getComputedStyle(mainApp).display === 'none') return;
-      showPromptStep(true);
-      document.getElementById('fin-date').value = new Date().toISOString().split('T')[0];
       finModal.classList.add('active');
+      window.setTimeout(() => document.getElementById('fin-chat-input')?.focus(), 100);
+      scrollToBottom();
     };
 
     window.openFinAssistant = openAssistant;
     finButton.addEventListener('click', openAssistant);
+    
     finModal.querySelectorAll('.modal-close, [data-close-modal]').forEach(function (button) {
       button.addEventListener('click', function () {
         finModal.classList.remove('active');
-        showPromptStep(true);
       });
     });
+    
     finModal.addEventListener('click', function (event) {
       if (event.target === finModal) {
         finModal.classList.remove('active');
-        showPromptStep(true);
       }
     });
+    
     document.addEventListener('keydown', function (event) {
       if (event.key === 'Escape' && finModal.classList.contains('active')) {
         finModal.classList.remove('active');
-        showPromptStep(true);
       }
     });
 
-    document.querySelectorAll('[data-fin-example]').forEach(function (button) {
-      button.addEventListener('click', function () {
-        const prompt = document.getElementById('fin-prompt-input');
-        prompt.value = button.dataset.finExample;
-        prompt.focus();
-      });
-    });
+    const chatMessagesContainer = document.getElementById('fin-chat-messages');
+    const chatInput = document.getElementById('fin-chat-input');
+    const btnChatSend = document.getElementById('btn-fin-chat-send');
+    const btnChatClear = document.getElementById('btn-fin-chat-clear');
 
-    document.getElementById('btn-fin-analyze')?.addEventListener('click', async function () {
-      const text = document.getElementById('fin-prompt-input').value.trim();
-      if (!text) {
-        Toast.show('Conte ao Fin qual movimentação deseja registrar.', 'warning');
-        document.getElementById('fin-prompt-input').focus();
-        return;
-      }
-      let suggestion = null;
-      if (window.ApiService && ApiService.isAuthenticated()) {
-        try {
-          const iaResponse = await ApiService.ia.processarTexto({ texto: text });
-          suggestion = AiEngine.fromApiResponse(iaResponse, text);
-        } catch (iaErr) {
-          console.warn('[FinGuardian IA Fin] Backend IA:', iaErr);
+    if (btnChatClear) {
+      btnChatClear.addEventListener('click', () => {
+        finChatHistory = [];
+        if (chatMessagesContainer) {
+          chatMessagesContainer.innerHTML = `
+            <div class="chat-message fin-message" style="align-self: flex-start; background: var(--color-surface); border: 1px solid var(--color-border); padding: 0.75rem 1rem; border-radius: 12px; border-top-left-radius: 0; max-width: 85%; font-size: 0.95rem; line-height: 1.4; color: var(--color-text);">
+              Chat limpo! Nova conversa iniciada. Em que posso ajudar com suas finanças agora?
+            </div>
+          `;
         }
-      }
-      if (!suggestion) {
-        suggestion = AiEngine.analyzePrompt(text);
-      }
-      showReviewStep(suggestion);
-    });
+      });
+    }
 
-    document.getElementById('btn-fin-back')?.addEventListener('click', function () {
-      showPromptStep(false);
-    });
+    const scrollToBottom = () => {
+      if(chatMessagesContainer) chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+    };
 
-    document.getElementById('btn-fin-save')?.addEventListener('click', async function () {
-      const description = document.getElementById('fin-description').value.trim();
-      const amount = parseFloat(document.getElementById('fin-amount').value);
-      const category = document.getElementById('fin-category').value.trim();
-      const account = document.getElementById('fin-account').value;
+    const addMessageToUI = (text, isUser = false) => {
+      const msgDiv = document.createElement('div');
+      msgDiv.className = isUser ? 'chat-message user-message' : 'chat-message fin-message';
+      msgDiv.style.alignSelf = isUser ? 'flex-end' : 'flex-start';
+      msgDiv.style.background = isUser ? 'var(--color-primary)' : 'var(--color-surface)';
+      msgDiv.style.color = isUser ? 'white' : 'var(--color-text)';
+      msgDiv.style.border = isUser ? 'none' : '1px solid var(--color-border)';
+      msgDiv.style.padding = '0.75rem 1rem';
+      msgDiv.style.borderRadius = '12px';
+      msgDiv.style.borderTopRightRadius = isUser ? '0' : '12px';
+      msgDiv.style.borderTopLeftRadius = isUser ? '12px' : '0';
+      msgDiv.style.maxWidth = '85%';
+      msgDiv.style.fontSize = '0.95rem';
+      msgDiv.style.lineHeight = '1.4';
+      
+      let formattedText = text.replace(/\n/g, '<br/>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+      msgDiv.innerHTML = formattedText;
+      
+      chatMessagesContainer.appendChild(msgDiv);
+      scrollToBottom();
+    };
 
-      if (!description || !category || !account || Number.isNaN(amount) || amount <= 0) {
-        Toast.show('Revise descrição, valor, categoria e conta.', 'warning');
-        return;
-      }
-
-      const newTx = {
-        id: 'tx_' + Date.now(),
-        type: document.getElementById('fin-type').value,
-        description,
-        amount,
-        category,
-        account,
-        paymentMethod: document.getElementById('fin-payment').value,
-        date: document.getElementById('fin-date').value || new Date().toISOString().split('T')[0],
-        origin: 'CONVERSA_IA'
+    const handleSendMessage = async () => {
+      const text = chatInput.value.trim();
+      if (!text) return;
+      
+      chatInput.value = '';
+      chatInput.style.height = 'auto';
+      
+      addMessageToUI(text, true);
+      
+      const payload = {
+        mensagem: text,
+        historico: finChatHistory
       };
+      
+      finChatHistory.push({ papel: 'user', conteudo: text });
+      
+      const loaderDiv = document.createElement('div');
+      loaderDiv.id = 'fin-chat-loader';
+      loaderDiv.innerHTML = '<span style="font-size: 0.85rem; color: var(--color-text-muted);">Fin está analisando seus dados...</span>';
+      loaderDiv.style.alignSelf = 'flex-start';
+      chatMessagesContainer.appendChild(loaderDiv);
+      scrollToBottom();
 
-      const saved = await FinancialStore.registerTransaction(newTx);
-      if (!saved) return;
-      finModal.classList.remove('active');
-      showPromptStep(true);
-      Toast.show('Movimentação salva com o Fin!');
+      try {
+        if (!window.ApiService || !ApiService.isAuthenticated()) {
+          throw new Error('Você precisa estar logado para falar com o Fin.');
+        }
+        
+        const response = await ApiService.fin.chat(payload);
+        
+        loaderDiv.remove();
+        addMessageToUI(response.resposta, false);
+        finChatHistory.push({ papel: 'assistant', conteudo: response.resposta });
+        
+      } catch (error) {
+        loaderDiv.remove();
+        const errorMsg = error.message || 'Desculpe, ocorreu um erro ao processar sua solicitação.';
+        addMessageToUI('❌ ' + errorMsg, false);
+      }
+    };
+
+    btnChatSend?.addEventListener('click', handleSendMessage);
+    chatInput?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        handleSendMessage();
+      }
+    });
+
+    chatInput?.addEventListener('input', function() {
+      this.style.height = 'auto';
+      this.style.height = (this.scrollHeight) + 'px';
+      scrollToBottom();
     });
   }
 
