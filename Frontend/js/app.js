@@ -431,6 +431,8 @@
       const incomeCommitment = State.user.monthlyIncome ? Math.round((totalExpense / State.user.monthlyIncome) * 100) : 0;
 
       document.getElementById('dash-total-balance').textContent = Formatters.currency(totalBalance);
+      const accountsCountEl = document.getElementById('dash-accounts-count');
+      if (accountsCountEl) accountsCountEl.textContent = `${State.accounts.length} Conta${State.accounts.length === 1 ? '' : 's'}`;
       document.getElementById('dash-total-income').textContent = Formatters.currency(totalIncome);
       document.getElementById('dash-total-expense').textContent = Formatters.currency(totalExpense);
       document.getElementById('dash-income-commitment').textContent = `${incomeCommitment}% comprometido da renda`;
@@ -606,7 +608,7 @@
           <td style="font-weight: 700; color: ${displayColor}">
             ${displaySign} ${Formatters.currency(t.amount)}
           </td>
-          <td class="table-actions"><button type="button" class="btn btn-outline btn-xs tx-action" data-tx-action="details" data-id="${t.id}">Detalhes</button><button type="button" class="btn btn-outline btn-xs tx-action" data-tx-action="edit" data-id="${t.id}">Editar</button><button type="button" class="btn btn-danger btn-xs tx-action" data-tx-action="delete" data-id="${t.id}">Excluir</button></td>
+          <td class="table-actions"><button type="button" class="btn btn-outline btn-xs tx-action" data-tx-action="details" data-id="${t.id}">Detalhes</button><button type="button" class="btn btn-outline btn-xs tx-action" data-tx-action="edit" data-id="${t.id}">Editar</button>${t.type === 'AJUSTE_SALDO' ? `<button type="button" class="btn btn-xs tx-action" style="background-color: #f59e0b; border-color: #f59e0b; color: white;" data-tx-action="delete" data-id="${t.id}">Reverter</button>` : `<button type="button" class="btn btn-danger btn-xs tx-action" data-tx-action="delete" data-id="${t.id}">Excluir</button>`}</td>
         </tr>
       `; }).join('');
     },
@@ -1178,8 +1180,12 @@
           transaction.previousBalance = NumberParser.value(sourceAccount.balance);
           sourceAccount.balance = NumberParser.value(transaction.realBalance);
         } else {
-          if (transaction.previousBalance === undefined || transaction.previousBalance === null) return false;
-          sourceAccount.balance = NumberParser.value(transaction.previousBalance);
+          // Se ajustado foi maior, a diferença é positiva, então subtraímos para reverter.
+          // Se ajustado foi menor, a diferença é negativa, então ao subtrair, somamos.
+          sourceAccount.balance = NumberParser.value(sourceAccount.balance) - amount;
+          if (window.ApiService && ApiService.isAuthenticated() && !String(sourceAccount.id).startsWith('acc_')) {
+            ApiService.contas.ajustarSaldo(sourceAccount.id, { novoSaldo: sourceAccount.balance, motivo: 'Reversão de Ajuste Saldo' }).catch(() => {});
+          }
         }
       }
       return true;
@@ -1443,6 +1449,23 @@
           link.classList.remove('active');
         }
       });
+
+      if (viewId === 'diario') {
+        ApiService.diario.listar().then(res => {
+          if (Array.isArray(res)) {
+            // Pega as 5 mais recentes (ordenando por ID descrescente)
+            const ultimas = res.sort((a, b) => b.id - a.id).slice(0, 5);
+            State.diary = ultimas.map(n => ({
+              id: n.id,
+              title: n.titulo,
+              content: n.conteudo,
+              type: (n.tipo || 'anotacao').toLowerCase(),
+              date: n.data
+            }));
+            Render.diary();
+          }
+        }).catch(err => console.error('Erro ao buscar diário:', err));
+      }
     }
   };
 
@@ -1618,10 +1641,13 @@
         editingTransactionId = tx.id;
 
         if (action === 'delete') {
-          if (confirm('Excluir esta movimentação?')) {
+          const confirmMsg = tx.type === 'AJUSTE_SALDO' 
+            ? 'Deseja reverter este ajuste e devolver o dinheiro para a conta?' 
+            : 'Excluir esta movimentação?';
+          if (confirm(confirmMsg)) {
             FinancialStore.deleteTransaction(tx).then(deleted => {
               if (deleted) {
-                Toast.show('Movimentação excluída e saldo recalculado.');
+                Toast.show(tx.type === 'AJUSTE_SALDO' ? 'Ajuste revertido e dinheiro devolvido.' : 'Movimentação excluída e saldo recalculado.');
               }
             });
           }
@@ -1931,7 +1957,13 @@
 
         newTx.recurrence = document.getElementById('manual-tx-recurrence')?.value || 'Única';
         if (newTx.type === 'TRANSFERENCIA') { newTx.destinationAccount = document.getElementById('manual-tx-destination')?.value; if (!newTx.destinationAccount || newTx.destinationAccount === newTx.account) { Toast.show('Escolha uma conta de destino diferente.', 'warning'); return; } }
-        if (newTx.type === 'AJUSTE_SALDO') { newTx.reason = document.getElementById('manual-tx-adjustment-reason')?.value; newTx.realBalance = parseFloat(document.getElementById('manual-tx-real-balance')?.value) || 0; if (!newTx.reason) { Toast.show('Informe o motivo do ajuste.', 'warning'); return; } }
+        if (newTx.type === 'AJUSTE_SALDO') { 
+          newTx.reason = document.getElementById('manual-tx-adjustment-reason')?.value; 
+          newTx.realBalance = parseFloat(document.getElementById('manual-tx-real-balance')?.value) || 0; 
+          const accToAdjust = State.accounts.find(a => a.name === newTx.account);
+          if (accToAdjust) newTx.amount = newTx.realBalance - NumberParser.value(accToAdjust.balance);
+          if (!newTx.reason) { Toast.show('Informe o motivo do ajuste.', 'warning'); return; } 
+        }
 
         const saved = await FinancialStore.registerTransaction(newTx);
         if (!saved) return;
@@ -2406,12 +2438,13 @@
             if (window.ApiService && ApiService.isAuthenticated() && !String(acc.id).startsWith('acc_')) {
               await ApiService.contas.ajustarSaldo(acc.id, { novoSaldo: value, motivo: reason });
             }
-            FinancialStore.registerTransaction({
+            await FinancialStore.registerTransaction({
               id: 'tx_' + Date.now(), type: 'AJUSTE_SALDO', description: 'Ajuste de saldo',
-              account: acc.name, amount: Math.abs(value - NumberParser.value(acc.balance)),
+              account: acc.name, accountId: acc.id, amount: value - NumberParser.value(acc.balance),
               realBalance: value, reason, category: 'Ajuste', date: FinancialStore.today()
             });
             Toast.show('Saldo ajustado com sucesso!');
+            Render.all();
           } catch (err) {
             Toast.show(err.message || 'Erro ao ajustar saldo.', 'error');
           }
