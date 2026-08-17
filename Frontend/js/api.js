@@ -31,9 +31,10 @@
       const saved = localStorage.getItem(STORAGE_API_BASE_URL);
       if (saved) return saved;
 
-      // Se executado através do servidor proxy local (porta 3000) ou mesma origem
+      // Se executado através do servidor proxy local (porta 3000), da porta
+      // padrão HTTP (80/443) ou da mesma origem (8080), usa caminhos relativos
       if (typeof window !== 'undefined' && window.location) {
-        if (window.location.port === '3000' || window.location.port === '8080') {
+        if (window.location.port === '3000' || window.location.port === '8080' || window.location.port === '') {
           return '';
         }
       }
