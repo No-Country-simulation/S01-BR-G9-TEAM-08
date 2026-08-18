@@ -21,6 +21,7 @@ const PORT = process.env.PORT || 3000;
 const BACKEND_HOST = process.env.BACKEND_HOST || 'localhost';
 const BACKEND_PORT = process.env.BACKEND_PORT || 8080;
 const FRONTEND_DIR = __dirname;
+const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || 'https://finguardian.com.br';
 
 const MIME_TYPES = {
   '.html': 'text/html; charset=UTF-8',
@@ -38,23 +39,12 @@ const MIME_TYPES = {
   '.ttf': 'font/ttf'
 };
 
-function addCorsHeaders(res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
-  res.setHeader('Access-Control-Max-Age', '86400');
-  addSecurityHeaders(res);
-}
-
-function addSecurityHeaders(res) {
-  const headers = securityHeaders();
-  for (const [name, value] of Object.entries(headers)) {
-    res.setHeader(name, value);
-  }
-}
-
-function securityHeaders() {
+function baseHeaders() {
   return {
+    'Access-Control-Allow-Origin': ALLOWED_ORIGIN,
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'Origin, X-Requested-With, Content-Type, Accept, Authorization',
+    'Access-Control-Max-Age': '86400',
     'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
     'X-Frame-Options': 'DENY',
     'X-Content-Type-Options': 'nosniff',
@@ -63,11 +53,9 @@ function securityHeaders() {
 }
 
 const server = http.createServer((req, res) => {
-  addCorsHeaders(res);
-
   // Responde preflight OPTIONS
   if (req.method === 'OPTIONS') {
-    res.writeHead(204);
+    res.writeHead(204, baseHeaders());
     res.end();
     return;
   }
@@ -89,21 +77,15 @@ const server = http.createServer((req, res) => {
     };
 
     const proxyReq = http.request(proxyOptions, (proxyRes) => {
-      // Manter status e headers da API Spring Boot
-      const headers = { ...proxyRes.headers };
-      // Garantir CORS e headers de segurança na resposta
-      headers['access-control-allow-origin'] = '*';
-      headers['access-control-allow-methods'] = 'GET, POST, PUT, PATCH, DELETE, OPTIONS';
-      headers['access-control-allow-headers'] = 'Origin, X-Requested-With, Content-Type, Accept, Authorization';
-      Object.assign(headers, securityHeaders());
-
+      // Manter status e headers da API Spring Boot, garantindo CORS e headers de segurança
+      const headers = { ...baseHeaders(), ...proxyRes.headers };
       res.writeHead(proxyRes.statusCode, headers);
       proxyRes.pipe(res);
     });
 
     proxyReq.on('error', (err) => {
       console.error(`[Proxy Error] Não foi possível conectar ao Spring Boot em ${BACKEND_HOST}:${BACKEND_PORT}:`, err.message);
-      res.writeHead(502, { 'Content-Type': 'application/json' });
+      res.writeHead(502, { 'Content-Type': 'application/json', ...baseHeaders() });
       res.end(JSON.stringify({
         code: 'BAD_GATEWAY',
         message: `Falha ao conectar no backend Spring Boot (http://${BACKEND_HOST}:${BACKEND_PORT}). Verifique se o servidor backend está rodando.`,
@@ -120,7 +102,7 @@ const server = http.createServer((req, res) => {
 
   // Proteção contra Directory Traversal
   if (!filePath.startsWith(FRONTEND_DIR)) {
-    res.writeHead(403, { 'Content-Type': 'text/plain' });
+    res.writeHead(403, { 'Content-Type': 'text/plain', ...baseHeaders() });
     res.end('403 Forbidden');
     return;
   }
@@ -136,11 +118,11 @@ const server = http.createServer((req, res) => {
 
     fs.readFile(filePath, (readErr, content) => {
       if (readErr) {
-        res.writeHead(500, { 'Content-Type': 'text/plain' });
+        res.writeHead(500, { 'Content-Type': 'text/plain', ...baseHeaders() });
         res.end('500 Internal Server Error');
         return;
       }
-      res.writeHead(200, { 'Content-Type': contentType });
+      res.writeHead(200, { 'Content-Type': contentType, ...baseHeaders() });
       res.end(content);
     });
   });
