@@ -2656,8 +2656,8 @@
       document.getElementById('btn-save-preferences')?.addEventListener('click', () => {
         const passwordInput = document.getElementById('prof-password-input');
         if (!passwordInput?.value) return;
-        if (passwordInput.value.length < 8) {
-          Toast.show('A nova senha deve ter pelo menos 8 caracteres.', 'warning');
+        if (passwordInput.value.length < 6) {
+          Toast.show('A nova senha deve ter pelo menos 6 caracteres.', 'warning');
           passwordInput.focus();
           return;
         }
