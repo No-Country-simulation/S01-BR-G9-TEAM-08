@@ -35,7 +35,7 @@ As seguintes funcionalidades compõem o escopo principal lançado e já em ambie
 - Classificação do perfil financeiro e geração de recomendações de economia;
 - Dashboard financeiro consolidado em interface responsiva;
 - API REST robusta integrada à persistência em banco de dados;
-- Implantação e integração completa com infraestrutura em nuvem na Oracle Cloud (OCI) sob o domínio **www.finguardian.com.br**.
+- Implantação e integração completa com infraestrutura em nuvem na Oracle Cloud (OCI) sob o domínio **finguardian.com.br**, exposto via Cloudflare Tunnels.
 
 ### 4.2 Funcionalidades Futuras
 Funcionalidades que não compõem o MVP atual, mas estão no backlog evolutivo:
@@ -85,7 +85,7 @@ O projeto FinGuardian AI utiliza testes automatizados para as principais regras 
 - **Camada de Negócio e API:** Java 21, Spring Boot, Spring Security (JWT).
 - **Camada de Persistência:** PostgreSQL 16, Spring Data JPA.
 - **Módulo de IA:** Python, Scikit-Learn, APIs Analíticas.
-- **Infraestrutura e Deploy:** Hospedado integralmente em Oracle Cloud Infrastructure (OCI VM).
+- **Infraestrutura e Deploy:** Hospedado integralmente em Oracle Cloud Infrastructure (OCI VM) com rede e HTTPS gerenciados via Cloudflare Tunnels.
 
 ---
 
@@ -93,7 +93,7 @@ O projeto FinGuardian AI utiliza testes automatizados para as principais regras 
 A aplicação atingiu o nível de produção.
 - **Provedor:** Oracle Cloud Infrastructure.
 - **Recursos:** Compute Instance (VM Linux) rodando os contêineres e aplicações (Backend, IA, e Banco de Dados) orquestrados de forma segura e acessível externamente via configuração de VCN e Security Lists.
-- **Domínio Público:** Acessível mundialmente através de **[www.finguardian.com.br](http://www.finguardian.com.br)**, utilizando HTTPS.
+- **Domínio Público:** Acessível mundialmente através de **[finguardian.com.br](https://finguardian.com.br)**, utilizando HTTPS provido pelo Cloudflare.
 
 ---
 

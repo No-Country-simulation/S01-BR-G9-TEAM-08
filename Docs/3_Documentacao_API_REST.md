@@ -1,7 +1,7 @@
 # FinGuardian AI - Documentação da API REST
 
 ## 1. Visão Geral e Padronização
-Esta documentação detalha os contratos da API REST do **FinGuardian AI**, sistema hospedado e acessível na URL oficial de produção: **https://www.finguardian.com.br/api**
+Esta documentação detalha os contratos da API REST do **FinGuardian AI**, sistema hospedado e acessível na URL oficial de produção: **https://finguardian.com.br/api**
 
 ### 1.1 Autenticação e Segurança
 A API utiliza JSON Web Tokens (JWT). Com exceção dos endpoints de registro e login, todas as requisições exigem o cabeçalho:

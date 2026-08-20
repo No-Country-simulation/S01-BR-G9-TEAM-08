@@ -4,7 +4,7 @@
 Esta seção apresenta os requisitos funcionais e não funcionais do FinGuardian AI.
 Cada requisito funcional possui identificador único, nome, descrição, prioridade, dependências, critérios de aceitação e regras de negócio relacionadas.
 
-A aplicação encontra-se atualmente em produção, hospedada em uma máquina virtual (VM) na Oracle Cloud Infrastructure (OCI), acessível através do domínio **www.finguardian.com.br**.
+A aplicação encontra-se atualmente em produção, hospedada em uma máquina virtual (VM) na Oracle Cloud Infrastructure (OCI), acessível através do domínio **finguardian.com.br** gerenciado pelo Cloudflare.
 
 ## 2. Requisitos Funcionais
 
@@ -189,7 +189,7 @@ A aplicação encontra-se atualmente em produção, hospedada em uma máquina vi
 - **RNF03 (Segregação de Dados):** Multi-tenancy lógico, as consultas na JPA devem ser obrigatoriamente vinculadas ao `usuario_id` extraído do JWT.
 - **RNF04 (Desempenho):** Respostas sub-segundo para endpoints de CRUD.
 - **RNF05 (Arquitetura):** Separação Controller -> Service -> Repository. O acesso ao módulo de IA ocorre por um serviço isolado.
-- **RNF06 (Implantação):** Hospedado em Máquina Virtual na Oracle Cloud Infrastructure, com o domínio www.finguardian.com.br atrelado para segurança HTTPS.
+- **RNF06 (Implantação):** Hospedado em Máquina Virtual na Oracle Cloud Infrastructure, com o domínio finguardian.com.br atrelado para segurança HTTPS via Cloudflare Tunnels.
 
 ---
 
@@ -204,7 +204,7 @@ A aplicação encontra-se atualmente em produção, hospedada em uma máquina vi
 ---
 
 ## 5. Casos de Uso e Diagramas
-1. **UC01:** O usuário entra em `www.finguardian.com.br`, se cadastra, e o servidor (Spring Boot) encripta a senha com BCrypt e grava no PostgreSQL da OCI.
+1. **UC01:** O usuário entra em `finguardian.com.br`, se cadastra, e o servidor (Spring Boot) encripta a senha com BCrypt e grava no PostgreSQL da OCI.
 2. **UC02:** O usuário faz login, a API valida e retorna o Bearer JWT.
 3. **UC03:** Com o JWT, o usuário submete um POST para registrar uma Despesa. O Backend chama a IA internamente. A IA devolve a categoria e tudo é salvo.
 4. **UC04:** O usuário solicita no Dashboard uma Análise Financeira. O Backend busca os gastos de todo o período, passa para o modelo do Fin (IA), que calcula o Perfil (ex: Poupador) e gera as Recomendações personalizadas.

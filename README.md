@@ -89,9 +89,9 @@ A solução foi desenvolvida integrando conceitos de **Engenharia de Software** 
 
 A nossa aplicação já está no ar! Ela foi hospedada de forma escalável utilizando uma **Máquina Virtual (VM) da Oracle Cloud Infrastructure (OCI)**. 
 
-Você pode acessar o FinGuardian AI diretamente através do nosso domínio oficial:
+Você pode acessar o FinGuardian AI diretamente através do nosso domínio oficial (exposto via Cloudflare Tunnels):
 
-🔗 **[www.finguardian.com.br](http://www.finguardian.com.br)**
+🔗 **[finguardian.com.br](https://finguardian.com.br)**
 
 ---
 
@@ -148,7 +148,7 @@ mvn spring-boot:run
 | Backend | Java 21, Spring Boot |
 | Frontend | HTML5, CSS3, JavaScript |
 | Banco de Dados | PostgreSQL |
-| Cloud e Infraestrutura | Oracle Cloud Infrastructure (OCI VM) |
+| Cloud e Infraestrutura | Oracle Cloud Infrastructure (OCI VM), Cloudflare (Tunnels) |
 | Ferramentas | VS Code, GitHub, Trello, Postman, ChatGPT, Claude |
 
 ---
@@ -175,7 +175,7 @@ mvn spring-boot:run
 
 ## 🔗 Links
 
-🌐 **Site Oficial:** [www.finguardian.com.br](http://www.finguardian.com.br)
+🌐 **Site Oficial:** [finguardian.com.br](https://finguardian.com.br)
 
 📁 [**Repositório Github**](https://github.com/No-Country-simulation/S01-BR-G9-TEAM-08)
 
